@@ -2,8 +2,6 @@ name: Backup DB
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 3 * * *"
 
 jobs:
   backup:
@@ -22,4 +20,3 @@ jobs:
         with:
           name: db-backup
           path: backups
-
