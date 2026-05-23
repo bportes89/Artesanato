@@ -1,8 +1,4 @@
-﻿import { requireUser } from "@/lib/auth";
-
 export default async function WhatsAppPage() {
-  await requireUser();
-
   const groupUrl = process.env.WHATSAPP_GROUP_URL ?? "";
 
   return (
