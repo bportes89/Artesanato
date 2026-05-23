@@ -1,0 +1,90 @@
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
+
+:root {
+  --brand-ink: 177 62% 11%;
+  --brand-olive: 52 38% 30%;
+  --brand-mint: 137 44% 80%;
+  --brand-tan: 8 62% 52%;
+  --brand-gold: 42 92% 56%;
+  --brand-sand: 45 38% 85%;
+  --brand-white: 0 0% 100%;
+
+  --background: var(--brand-sand);
+  --foreground: var(--brand-ink);
+  --card: var(--brand-white);
+  --card-foreground: var(--brand-ink);
+  --popover: var(--brand-white);
+  --popover-foreground: var(--brand-ink);
+  --primary: var(--brand-ink);
+  --primary-foreground: var(--brand-white);
+  --secondary: var(--brand-mint);
+  --secondary-foreground: var(--brand-ink);
+  --muted: var(--brand-sand);
+  --muted-foreground: 0 0% 0%;
+  --accent: var(--brand-tan);
+  --accent-foreground: var(--brand-white);
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 45 28% 80%;
+  --input: 45 28% 80%;
+  --ring: var(--brand-ink);
+  --radius: 1.25rem;
+
+  --premium-hero-from: var(--brand-ink);
+  --premium-hero-to: 177 50% 16%;
+  --premium-sidebar-from: var(--brand-ink);
+  --premium-sidebar-to: 177 45% 14%;
+  --grid-color: var(--brand-ink);
+}
+
+.dark {
+  --background: 177 62% 9%;
+  --foreground: var(--brand-sand);
+  --card: 177 42% 13%;
+  --card-foreground: var(--brand-sand);
+  --popover: 177 42% 13%;
+  --popover-foreground: var(--brand-sand);
+  --primary: var(--brand-mint);
+  --primary-foreground: var(--brand-ink);
+  --secondary: var(--brand-olive);
+  --secondary-foreground: var(--brand-sand);
+  --muted: 177 34% 16%;
+  --muted-foreground: 137 24% 78%;
+  --accent: var(--brand-tan);
+  --accent-foreground: var(--brand-ink);
+  --destructive: 0 63% 52%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 177 28% 20%;
+  --input: 177 28% 20%;
+  --ring: var(--brand-mint);
+
+  --premium-hero-from: 177 62% 11%;
+  --premium-hero-to: 52 38% 22%;
+  --premium-sidebar-from: 177 62% 11%;
+  --premium-sidebar-to: 52 38% 20%;
+  --grid-color: var(--brand-mint);
+}
+
+* { @apply border-border; }
+html { scroll-behavior: smooth; }
+body {
+  @apply min-h-screen bg-background text-foreground antialiased;
+  background-image: radial-gradient(circle at top left, hsl(var(--brand-tan) / 0.18), transparent 28%),
+    radial-gradient(circle at bottom right, hsl(var(--brand-mint) / 0.24), transparent 32%),
+    linear-gradient(180deg, hsl(var(--brand-white) / 0.76), hsl(var(--brand-sand) / 0.96));
+}
+.dark body {
+  background-image: radial-gradient(circle at top left, hsl(var(--brand-tan) / 0.12), transparent 28%),
+    radial-gradient(circle at bottom right, hsl(var(--brand-olive) / 0.14), transparent 34%),
+    linear-gradient(180deg, hsl(var(--background) / 0.92), hsl(var(--background) / 0.98));
+}
+::selection { background: hsl(var(--primary) / 0.18); }
+a { @apply transition-colors; }
+button, input, textarea { font: inherit; }
+.premium-surface { @apply border border-border/70 bg-card/85 backdrop-blur shadow-premium; }
+.premium-grid {
+  background-image: linear-gradient(to right, hsl(var(--grid-color) / 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(var(--grid-color) / 0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
