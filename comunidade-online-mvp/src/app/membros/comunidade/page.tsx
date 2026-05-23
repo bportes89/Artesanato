@@ -66,6 +66,7 @@ function CommentNode(props: {
   node: CommunityComment;
   depth?: number;
   currentUserId?: string | null;
+  canModerateSpace: boolean;
   signedUrlByKey: Record<string, string>;
   ensureSignedUrl: (r2Key: string) => void;
   onReply: (commentId: string, authorName: string | null | undefined) => void;
@@ -117,11 +118,11 @@ function CommentNode(props: {
             <Button size="sm" variant="ghost" onClick={() => void props.onModerate(props.node.id, "delete")}>
               Excluir
             </Button>
-          ) : (
+          ) : props.canModerateSpace ? (
             <Button size="sm" variant="ghost" onClick={() => void props.onModerate(props.node.id, "hide")}>
               Ocultar
             </Button>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -133,6 +134,7 @@ function CommentNode(props: {
               node={reply}
               depth={depth + 1}
               currentUserId={props.currentUserId}
+              canModerateSpace={props.canModerateSpace}
               signedUrlByKey={props.signedUrlByKey}
               ensureSignedUrl={props.ensureSignedUrl}
               onReply={props.onReply}
@@ -192,6 +194,7 @@ export default function ComunidadePage() {
   const inFlightSignedUrls = useRef(new Set<string>());
 
   const currentSpace = useMemo(() => spaces.find((space) => space.id === spaceId), [spaces, spaceId]);
+  const canModerateSpace = currentSpace?.myRole === "ADMIN" || currentSpace?.myRole === "MODERATOR";
 
   const ensureSignedUrl = (r2Key: string) => {
     if (signedUrlByKey[r2Key]) return;
@@ -346,9 +349,10 @@ export default function ComunidadePage() {
       await loadFeed("reset");
       await loadMyPosts("reset");
       if (selectedPostId === postId) await refreshPostDetail(postId);
-    } catch {
-      if (selectedPostId === postId) setPostDetailError("Ação não permitida ou falhou.");
-      else setPostError("Ação não permitida ou falhou.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Ação não permitida ou falhou.";
+      if (selectedPostId === postId) setPostDetailError(message);
+      else setPostError(message);
     }
   };
 
@@ -357,8 +361,8 @@ export default function ComunidadePage() {
     try {
       await communityService.moderateComment(commentId, { action, reason });
       if (selectedPostId) await refreshPostDetail(selectedPostId);
-    } catch {
-      setPostDetailError("Ação não permitida ou falhou.");
+    } catch (err) {
+      setPostDetailError(err instanceof Error ? err.message : "Ação não permitida ou falhou.");
     }
   };
 
@@ -702,12 +706,16 @@ export default function ComunidadePage() {
                               Arquivar
                             </Button>
                           )}
-                          <Button size="sm" variant="ghost" onClick={() => void moderatePost(post.id, "pin")}>
-                            Fixar
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => void moderatePost(post.id, "unpin")}>
-                            Desafixar
-                          </Button>
+                          {canModerateSpace && post.spaceId === spaceId ? (
+                            <Button size="sm" variant="ghost" onClick={() => void moderatePost(post.id, "pin")}>
+                              Fixar
+                            </Button>
+                          ) : null}
+                          {canModerateSpace && post.spaceId === spaceId ? (
+                            <Button size="sm" variant="ghost" onClick={() => void moderatePost(post.id, "unpin")}>
+                              Desafixar
+                            </Button>
+                          ) : null}
                         </div>
                       </div>
                     ))}
@@ -842,12 +850,16 @@ export default function ComunidadePage() {
                         </Button>
                       )
                     ) : null}
-                    <Button size="sm" variant="ghost" onClick={() => void moderatePost(postDetail.id, "hide")}>
-                      Ocultar
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => void moderatePost(postDetail.id, "pin")}>
-                      Fixar
-                    </Button>
+                    {canModerateSpace ? (
+                      <Button size="sm" variant="ghost" onClick={() => void moderatePost(postDetail.id, "hide")}>
+                        Ocultar
+                      </Button>
+                    ) : null}
+                    {canModerateSpace ? (
+                      <Button size="sm" variant="ghost" onClick={() => void moderatePost(postDetail.id, "pin")}>
+                        Fixar
+                      </Button>
+                    ) : null}
                   </div>
                 </div>
               ) : null}
@@ -861,6 +873,7 @@ export default function ComunidadePage() {
                         key={c.id}
                         node={c}
                         currentUserId={currentUser?.id ?? null}
+                        canModerateSpace={canModerateSpace}
                         signedUrlByKey={signedUrlByKey}
                         ensureSignedUrl={ensureSignedUrl}
                         onReply={(commentId, authorName) => setReplyTo({ commentId, authorName })}
