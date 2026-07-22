@@ -33,8 +33,29 @@ function AnalyticsTracker() {
 export function Providers({ children, user }: ProvidersProps) {
   const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { staleTime: 60_000, refetchOnWindowFocus: false } } }));
   const setUser = useSessionStore((state) => state.setUser);
+  const currentUser = useSessionStore((state) => state.user);
   const hydrated = useSessionStore((state) => state.hydrated);
   const markHydrated = useSessionStore((state) => state.markHydrated);
-  if (!hydrated) { setUser(user ?? null); markHydrated(); }
+
+  useEffect(() => {
+    if (!hydrated) {
+      setUser(user ?? null);
+      markHydrated();
+      return;
+    }
+
+    if (
+      user &&
+      (!currentUser ||
+        currentUser.id !== user.id ||
+        currentUser.email !== user.email ||
+        currentUser.name !== user.name ||
+        currentUser.createdAt !== user.createdAt ||
+        currentUser.status !== user.status)
+    ) {
+      setUser(user);
+    }
+  }, [currentUser, hydrated, markHydrated, setUser, user]);
+
   return <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}><QueryClientProvider client={queryClient}><AnalyticsTracker />{children}<ReactQueryDevtools initialIsOpen={false} /></QueryClientProvider></ThemeProvider>;
 }
