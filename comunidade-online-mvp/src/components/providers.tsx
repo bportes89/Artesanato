@@ -6,8 +6,9 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { analyticsService } from "@/lib/services/analytics";
+import type { Me } from "@/lib/services/users";
 
-type ProvidersProps = { children: React.ReactNode; user?: { id: string; email: string; name?: string | null; status?: string; createdAt?: string } | null };
+type ProvidersProps = { children: React.ReactNode; user?: Me | null };
 
 function AnalyticsTracker() {
   const user = useSessionStore((state) => state.user);

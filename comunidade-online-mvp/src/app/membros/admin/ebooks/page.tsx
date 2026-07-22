@@ -1,29 +1,19 @@
-import Link from "next/link";
-import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { adminServer } from "@/lib/services/admin.server";
 
-export default async function AdminEbooksPage({ searchParams }: { searchParams?: Promise<Record<string, string | string[] | undefined>> }) {
-  const params = searchParams ? await searchParams : {};
-  const query = typeof params.query === "string" ? params.query : "";
-  const data = await adminServer.ebooks({ page: 1, limit: 20, query });
+export default async function AdminEbooksPage() {
+  const data = await adminServer.ebooks({ page: 1, limit: 20 });
 
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="Admin • Ebooks" title="Gestão de ebooks" description="Catálogo, status, anexos e publicação." />
-      <div className="premium-surface rounded-[28px] p-6">
-        <form className="flex flex-col gap-3 md:flex-row md:items-center" action="/membros/admin/ebooks">
-          <input name="query" defaultValue={query} placeholder="Buscar ebook por título" className="h-12 flex-1 rounded-2xl border border-input bg-background/80 px-4 text-sm" />
-          <button className="h-12 rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground">Buscar</button>
-          <Link href="/membros/admin/ebooks/novo" className="h-12 rounded-full border border-border bg-background/80 px-6 text-sm font-medium leading-[3rem]">
-            Novo ebook
-          </Link>
-        </form>
+      <div className="space-y-3">
+        <h1 className="font-display text-4xl font-semibold text-[#1B2A3B]">Admin • Ebooks</h1>
+        <p className="text-base text-[#1B2A3B]/80">Catálogo de ebooks disponíveis no tenant.</p>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
         {(data?.items ?? []).map((ebook) => (
-          <Card key={ebook.id}>
+          <Card key={ebook.id} className="border border-[#1B2A3B]/10 bg-white/90">
             <CardHeader>
               <CardTitle>{ebook.title}</CardTitle>
             </CardHeader>
@@ -37,4 +27,3 @@ export default async function AdminEbooksPage({ searchParams }: { searchParams?:
     </div>
   );
 }
-

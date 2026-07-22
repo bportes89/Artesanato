@@ -8,9 +8,11 @@ import type {
   AdminEbook,
   AdminMetrics,
   AdminOrder,
+  AdminTeacherApplication,
   AdminSearchResults,
   AdminUpload,
   AdminUser,
+  AdminWaitlistEntry,
   PagedResult,
 } from "@/lib/services/admin";
 
@@ -22,6 +24,20 @@ export const adminServer = {
   analyticsFunnel: (name: string, days = 30) =>
     safeServerApiFetch<AdminAnalyticsFunnel>(`/admin/analytics/funnel?name=${encodeURIComponent(name)}&days=${encodeURIComponent(String(days))}`),
   search: (query: string) => safeServerApiFetch<AdminSearchResults>(`/admin/search?query=${encodeURIComponent(query)}`),
+  waitlists: (params: { page?: number; limit?: number; topic?: string }) => {
+    const search = new URLSearchParams();
+    if (params.page) search.set("page", String(params.page));
+    if (params.limit) search.set("limit", String(params.limit));
+    if (params.topic) search.set("topic", params.topic);
+    return safeServerApiFetch<PagedResult<AdminWaitlistEntry>>(`/admin/waitlists?${search.toString()}`);
+  },
+  teacherApplications: (params: { page?: number; limit?: number; status?: string }) => {
+    const search = new URLSearchParams();
+    if (params.page) search.set("page", String(params.page));
+    if (params.limit) search.set("limit", String(params.limit));
+    if (params.status) search.set("status", params.status);
+    return safeServerApiFetch<PagedResult<AdminTeacherApplication>>(`/admin/teacher-applications?${search.toString()}`);
+  },
   users: (params: { page?: number; limit?: number; query?: string; status?: string; roleKey?: string }) => {
     const search = new URLSearchParams();
     if (params.page) search.set("page", String(params.page));

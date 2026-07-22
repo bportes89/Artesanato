@@ -1,10 +1,5 @@
-﻿import { PageHeader } from "@/components/common/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { mentorshipService } from "@/lib/services/mentorship";
-import { purchasesServerService } from "@/lib/services/purchases.server";
-import { formatDate, formatCurrency } from "@/lib/utils";
-export default async function MentoriaPage() {
-  const [offers, orders] = await Promise.all([mentorshipService.offers(), purchasesServerService.list()]);
-  const mentorshipOrders = (orders ?? []).filter((order) => order.items.some((item) => item.product.type === "MENTORSHIP"));
-  return <div className="space-y-6"><PageHeader eyebrow="Mentoria" title="Mentoria paga e acompanhamento" description="Acompanhe suas ofertas, compras e próximos passos da jornada com mentoria." /><div className="grid gap-4 xl:grid-cols-2"><Card><CardHeader><CardTitle>Ofertas disponíveis</CardTitle></CardHeader><CardContent className="space-y-4">{offers?.length ? offers.map((offer) => <div key={offer.id} className="rounded-[24px] border border-border/70 px-4 py-4"><p className="font-semibold">{offer.name}</p><p className="mt-2 text-sm text-muted-foreground">{offer.description ?? "Sessão premium com acompanhamento individual."}</p></div>) : <p className="text-sm text-muted-foreground">As ofertas de mentoria serão publicadas aqui.</p>}</CardContent></Card><Card><CardHeader><CardTitle>Histórico de compras</CardTitle></CardHeader><CardContent className="space-y-4">{mentorshipOrders.length ? mentorshipOrders.map((order) => <div key={order.id} className="rounded-[24px] border border-border/70 px-4 py-4"><div className="flex items-center justify-between gap-4"><p className="font-semibold">{order.items[0]?.product.name ?? "Mentoria"}</p><p className="text-sm text-primary">{order.status}</p></div><p className="mt-2 text-sm text-muted-foreground">{formatCurrency(order.totalCents, order.currency)} • {formatDate(order.createdAt)}</p></div>) : <p className="text-sm text-muted-foreground">Nenhuma compra de mentoria registrada até agora.</p>}</CardContent></Card></div></div>;
+import { redirect } from "next/navigation";
+
+export default function MentoriaPage() {
+  redirect("/membros/diagnostico-consultoria");
 }

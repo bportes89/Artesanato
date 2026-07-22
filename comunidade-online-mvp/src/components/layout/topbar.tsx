@@ -1,6 +1,7 @@
 "use client";
 import { usePathname } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
+import { getDashboardGreeting, getWelcomeGreeting } from "@/lib/member-area";
 export function Topbar() {
   const user = useSession();
   const pathname = usePathname();
@@ -26,18 +27,28 @@ export function Topbar() {
             ? "Ebooks"
             : pathname.startsWith("/membros/comunidade")
               ? "Comunidade"
-              : pathname.startsWith("/membros/mentoria")
-                ? "Mentoria"
+              : pathname.startsWith("/membros/guardias-do-oficio")
+                ? "Guardiãs do Ofício"
+                : pathname.startsWith("/membros/livro")
+                  ? "Livro"
+                  : pathname.startsWith("/membros/diagnostico-consultoria")
+                    ? "Diagnóstico & Consultoria"
+                    : pathname.startsWith("/membros/workshops")
+                      ? "Workshops"
+                      : pathname.startsWith("/membros/mentoria")
+                        ? "Diagnóstico & Consultoria"
                 : pathname.startsWith("/membros/perfil")
                   ? "Meu perfil"
                   : pathname.startsWith("/membros/admin")
                     ? "Admin"
                     : "Área de membros";
 
+  const greeting = pathname === "/membros" ? getDashboardGreeting(user) : getWelcomeGreeting(user);
+
   return (
-    <header className="premium-surface rounded-[28px] bg-background/70 px-6 py-5">
-      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">{title}</p>
-      <p className="mt-2 text-sm text-muted-foreground">Olá, {user?.name ?? "membro"}!</p>
+    <header className="rounded-[28px] border border-[#1B2A3B]/10 bg-[#F1E8DC] px-6 py-5 shadow-premium">
+      <p className="font-display text-sm font-semibold uppercase tracking-[0.22em] text-[#D4542A]">{title}</p>
+      <p className="mt-2 text-xl font-semibold text-[#1B2A3B] md:text-[1.75rem]">{greeting}</p>
     </header>
   );
 }

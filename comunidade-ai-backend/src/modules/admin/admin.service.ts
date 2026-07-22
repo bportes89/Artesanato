@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, TeacherApplicationStatus, WaitlistTopic } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -355,6 +355,84 @@ export class AdminService {
         roles: u.roles.map((r) => r.role),
       })),
     };
+  }
+
+  async listMemberWaitlists(params: { tenantId: string; page?: number; limit?: number; topic?: string }) {
+    const take = Math.min(Math.max(params.limit ?? 20, 1), 100);
+    const page = Math.max(params.page ?? 1, 1);
+    const skip = (page - 1) * take;
+    const topic = params.topic?.trim();
+
+    const where: Prisma.MemberWaitlistEntryWhereInput = {
+      tenantId: params.tenantId,
+      ...(topic ? { topic: topic as WaitlistTopic } : {}),
+    };
+
+    const [total, items] = await Promise.all([
+      this.prisma.memberWaitlistEntry.count({ where }),
+      this.prisma.memberWaitlistEntry.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+        select: {
+          id: true,
+          topic: true,
+          createdAt: true,
+          user: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              phone: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    return { page, limit: take, total, items };
+  }
+
+  async listTeacherApplications(params: { tenantId: string; page?: number; limit?: number; status?: string }) {
+    const take = Math.min(Math.max(params.limit ?? 20, 1), 100);
+    const page = Math.max(params.page ?? 1, 1);
+    const skip = (page - 1) * take;
+    const status = params.status?.trim();
+
+    const where: Prisma.TeacherApplicationWhereInput = {
+      tenantId: params.tenantId,
+      ...(status ? { status: status as TeacherApplicationStatus } : {}),
+    };
+
+    const [total, items] = await Promise.all([
+      this.prisma.teacherApplication.count({ where }),
+      this.prisma.teacherApplication.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+        select: {
+          id: true,
+          name: true,
+          city: true,
+          technique: true,
+          experience: true,
+          whatsapp: true,
+          status: true,
+          createdAt: true,
+          user: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    return { page, limit: take, total, items };
   }
 
   async updateUser(params: { tenantId: string; actorUserId: string; userId: string; name?: string; status?: string }) {

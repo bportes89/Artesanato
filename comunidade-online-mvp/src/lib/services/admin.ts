@@ -29,6 +29,8 @@ export type AdminEbook = { id: string; title: string; description?: string | nul
 export type AdminOrder = { id: string; status: string; totalCents: number; currency: string; createdAt: string; user: { id: string; email: string; name?: string | null }; items: Array<{ quantity: number; product: { name: string; type: string } }>; payments: Array<{ provider: string; status: string; createdAt: string }> };
 export type AdminUpload = { id: string; status: string; filePurpose: string; originalFilename?: string | null; expectedSizeBytes?: string | null; createdAt: string; completedAt?: string | null; user?: { id: string; email: string } | null; file?: { id: string; r2Key: string; mimeType?: string | null; sizeBytes?: string | null } | null };
 export type AdminCarouselItem = { id: string; title: string; subtitle?: string | null; ctaLabel?: string | null; ctaUrl?: string | null; status: string; sortOrder: number; publishedAt?: string | null; imageFileId?: string | null; mobileImageFileId?: string | null; backgroundColor?: string | null; updatedAt?: string };
+export type AdminWaitlistEntry = { id: string; topic: string; createdAt: string; user: { id: string; email: string; name?: string | null; phone?: string | null } };
+export type AdminTeacherApplication = { id: string; name: string; city: string; technique: string; experience: string; whatsapp: string; status: string; createdAt: string; user?: { id: string; email: string; name?: string | null } | null };
 
 export type AdminSearchUser = { id: string; email: string; name?: string | null; status: string };
 export type AdminSearchCourse = { id: string; title: string; status: string };
@@ -39,6 +41,20 @@ export type AdminSearchResults = { users: AdminSearchUser[]; courses: AdminSearc
 
 export const adminClient = {
   metrics: () => apiFetch<AdminMetrics>({ path: "/admin/metrics" }),
+  waitlists: (params: { page?: number; limit?: number; topic?: string }) => {
+    const search = new URLSearchParams();
+    if (params.page) search.set("page", String(params.page));
+    if (params.limit) search.set("limit", String(params.limit));
+    if (params.topic) search.set("topic", params.topic);
+    return apiFetch<PagedResult<AdminWaitlistEntry>>({ path: `/admin/waitlists?${search.toString()}` });
+  },
+  teacherApplications: (params: { page?: number; limit?: number; status?: string }) => {
+    const search = new URLSearchParams();
+    if (params.page) search.set("page", String(params.page));
+    if (params.limit) search.set("limit", String(params.limit));
+    if (params.status) search.set("status", params.status);
+    return apiFetch<PagedResult<AdminTeacherApplication>>({ path: `/admin/teacher-applications?${search.toString()}` });
+  },
   carousel: (params: { page?: number; limit?: number; query?: string; status?: string }) => {
     const search = new URLSearchParams();
     if (params.page) search.set("page", String(params.page));

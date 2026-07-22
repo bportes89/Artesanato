@@ -340,6 +340,28 @@ export class AdminController {
   }
 
   @Roles('ADMIN')
+  @Get('waitlists')
+  async waitlists(@CurrentUser() user: AuthUser, @Query() query: AdminListQueryDto, @Query('topic') topic?: string) {
+    return this.admin.listMemberWaitlists({
+      tenantId: user.tenantId,
+      page: query.page,
+      limit: query.limit,
+      topic,
+    });
+  }
+
+  @Roles('ADMIN')
+  @Get('teacher-applications')
+  async teacherApplications(@CurrentUser() user: AuthUser, @Query() query: AdminListQueryDto, @Query('status') status?: string) {
+    return this.admin.listTeacherApplications({
+      tenantId: user.tenantId,
+      page: query.page,
+      limit: query.limit,
+      status,
+    });
+  }
+
+  @Roles('ADMIN')
   @Patch('users/:id')
   async updateUser(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() body: UpdateUserDto) {
     return this.admin.updateUser({ tenantId: user.tenantId, actorUserId: user.userId, userId: id, name: body.name, status: body.status });

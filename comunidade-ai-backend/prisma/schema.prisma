@@ -168,6 +168,19 @@ enum UploadStatus {
   CANCELED
 }
 
+enum WaitlistTopic {
+  GUARDIAS_DO_OFICIO
+  WORKSHOPS
+  LIVRO
+}
+
+enum TeacherApplicationStatus {
+  PENDING
+  REVIEWED
+  CONTACTED
+  ARCHIVED
+}
+
 enum FilePurpose {
   AVATAR
   COVER
@@ -212,6 +225,8 @@ model Tenant {
   webhookEvents    WebhookEvent[]
   mentorshipOffers MentorshipOffer[]
   waitlist         WaitlistSubscriber[]
+  memberWaitlists  MemberWaitlistEntry[]
+  teacherApplications TeacherApplication[]
   onboardingStates OnboardingState[]
   userSessions     UserSession[]
   passwordResetTokens PasswordResetToken[]
@@ -269,6 +284,45 @@ model WaitlistSubscriber {
   @@index([tenantId, createdAt])
 }
 
+model MemberWaitlistEntry {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  userId   String @db.Uuid
+
+  topic WaitlistTopic
+
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId, topic])
+  @@index([tenantId, topic, createdAt])
+  @@index([tenantId, userId, createdAt])
+}
+
+model TeacherApplication {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  userId   String? @db.Uuid
+
+  name      String
+  city      String
+  technique String
+  experience String
+  whatsapp  String
+  status    TeacherApplicationStatus @default(PENDING)
+
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, status, createdAt])
+  @@index([tenantId, userId, createdAt])
+}
+
 model User {
   id       String     @id @default(uuid()) @db.Uuid
   tenantId String     @db.Uuid
@@ -306,6 +360,8 @@ model User {
 
   ebookLibrary   LibraryItem[]
   ebookDownloads EbookDownload[]
+  memberWaitlists MemberWaitlistEntry[]
+  teacherApplications TeacherApplication[]
 
   mentorshipEnrollments MentorshipEnrollment[]
   mentorshipSessions    MentorshipSession[]

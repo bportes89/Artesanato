@@ -1,4 +1,4 @@
-﻿import { appConfig, apiUrl } from "@/lib/config";
+import { appConfig, apiUrl } from "@/lib/config";
 
 type ApiRequestInit = RequestInit & { path: string; csrf?: boolean; next?: NextFetchRequestConfig };
 

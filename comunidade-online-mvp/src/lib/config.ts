@@ -7,9 +7,9 @@ export const appConfig = {
 };
 export function apiUrl(path: string) {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  if (appConfig.apiBaseUrl) return `${appConfig.apiBaseUrl}/${appConfig.apiPrefix}${normalizedPath}`;
   const apiPath = `/${appConfig.apiPrefix}${normalizedPath}`;
   if (typeof window !== "undefined") return apiPath;
+  if (appConfig.apiBaseUrl) return `${appConfig.apiBaseUrl}/${appConfig.apiPrefix}${normalizedPath}`;
   const origin =
     process.env.NEXT_PUBLIC_APP_URL ??
     process.env.APP_PUBLIC_URL ??
