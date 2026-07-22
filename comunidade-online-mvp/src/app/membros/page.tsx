@@ -123,7 +123,7 @@ function BadgePill({ label, tone }: { label: string; tone: "free" | "soon" | "pa
 }
 
 export default async function DashboardPage() {
-  const user = await usersServerService.requireMe();
+  const user = await usersServerService.me();
 
   return (
     <div className="space-y-8">
