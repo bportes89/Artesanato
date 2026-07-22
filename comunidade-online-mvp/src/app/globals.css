@@ -2,39 +2,40 @@
 @config "../../tailwind.config.ts";
 
 :root {
-  --brand-ink: 177 62% 11%;
-  --brand-olive: 52 38% 30%;
-  --brand-mint: 137 44% 80%;
-  --brand-tan: 8 62% 52%;
-  --brand-gold: 42 92% 56%;
-  --brand-sand: 45 38% 85%;
+  --brand-ink: 211 37% 17%;
+  --brand-olive: 146 38% 72%;
+  --brand-mint: 146 38% 72%;
+  --brand-tan: 16 67% 50%;
+  --brand-gold: 39 91% 55%;
+  --brand-sand: 37 38% 90%;
+  --brand-blush: 18 57% 77%;
   --brand-white: 0 0% 100%;
 
   --background: var(--brand-sand);
   --foreground: var(--brand-ink);
-  --card: var(--brand-white);
+  --card: 0 0% 100%;
   --card-foreground: var(--brand-ink);
   --popover: var(--brand-white);
   --popover-foreground: var(--brand-ink);
-  --primary: var(--brand-ink);
+  --primary: var(--brand-gold);
   --primary-foreground: var(--brand-white);
   --secondary: var(--brand-mint);
   --secondary-foreground: var(--brand-ink);
-  --muted: var(--brand-sand);
-  --muted-foreground: 0 0% 0%;
+  --muted: 37 26% 84%;
+  --muted-foreground: 211 17% 34%;
   --accent: var(--brand-tan);
   --accent-foreground: var(--brand-white);
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
-  --border: 45 28% 80%;
-  --input: 45 28% 80%;
-  --ring: var(--brand-ink);
-  --radius: 1.25rem;
+  --border: 37 21% 78%;
+  --input: 37 21% 78%;
+  --ring: var(--brand-gold);
+  --radius: 1.5rem;
 
   --premium-hero-from: var(--brand-ink);
-  --premium-hero-to: 177 50% 16%;
+  --premium-hero-to: 211 33% 21%;
   --premium-sidebar-from: var(--brand-ink);
-  --premium-sidebar-to: 177 45% 14%;
+  --premium-sidebar-to: 211 33% 21%;
   --grid-color: var(--brand-ink);
 }
 
@@ -70,9 +71,8 @@
 html { scroll-behavior: smooth; }
 body {
   @apply min-h-screen bg-background text-foreground antialiased;
-  background-image: radial-gradient(circle at top left, hsl(var(--brand-tan) / 0.18), transparent 28%),
-    radial-gradient(circle at bottom right, hsl(var(--brand-mint) / 0.24), transparent 32%),
-    linear-gradient(180deg, hsl(var(--brand-white) / 0.76), hsl(var(--brand-sand) / 0.96));
+  background: hsl(var(--background));
+  font-family: var(--font-body), sans-serif;
 }
 .dark body {
   background-image: radial-gradient(circle at top left, hsl(var(--brand-tan) / 0.12), transparent 28%),
@@ -82,9 +82,59 @@ body {
 ::selection { background: hsl(var(--primary) / 0.18); }
 a { @apply transition-colors; }
 button, input, textarea { font: inherit; }
-.premium-surface { @apply border border-border/70 bg-card/85 backdrop-blur shadow-premium; }
+.premium-surface { @apply border border-border/70 bg-card shadow-premium; }
 .premium-grid {
   background-image: linear-gradient(to right, hsl(var(--grid-color) / 0.06) 1px, transparent 1px),
     linear-gradient(to bottom, hsl(var(--grid-color) / 0.06) 1px, transparent 1px);
   background-size: 24px 24px;
+}
+
+.font-display { font-family: var(--font-display), sans-serif; }
+.font-serif-accent { font-family: var(--font-serif), serif; }
+
+.landing-section-dark {
+  background: hsl(var(--brand-ink));
+  color: hsl(var(--brand-sand));
+}
+
+.landing-section-cream {
+  background: hsl(var(--brand-sand));
+  color: hsl(var(--brand-ink));
+}
+
+.landing-shell {
+  width: min(1120px, calc(100vw - 2rem));
+  margin-inline: auto;
+}
+
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: landing-ticker 24s linear infinite;
+}
+
+.counter-divider {
+  position: relative;
+}
+
+.counter-divider::after {
+  content: "";
+  position: absolute;
+  right: -0.5rem;
+  top: 18%;
+  height: 64%;
+  width: 1px;
+  background: hsl(var(--brand-tan) / 0.35);
+}
+
+@keyframes landing-ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+  }
 }

@@ -1,92 +1,296 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowRight, BookOpen, Crown, Leaf, MessageCircleHeart, Sparkles, Tv, Users } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowRight, BookOpenText, Crown, MessageCircleHeart, Sparkles, Star, Tv2, UsersRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { authService } from "@/lib/services/auth";
+import { Badge } from "@/components/ui/badge";
+import { CommunitySignupForm, WHATSAPP_HELP_LINK } from "@/components/common/community-signup-form";
 
-const topics = [
+const immediateAccessCards = [
+  {
+    title: "Curadoria de Conteúdos",
+    description: "Conteúdos selecionados em formato de vídeo e PDF das áreas fundamentais do negócio artesanal.",
+    badge: "Gratuito",
+    icon: Crown,
+    chips: ["Precificação", "Vendas", "Canva", "Legislação", "Redes Sociais", "Embalagem", "Marketplaces"],
+  },
+  {
+    title: "Videoaulas",
+    description: "4 aulas completas da Fernanda, no seu ritmo.",
+    badge: "Gratuito",
+    icon: Tv2,
+    list: ["Masterclass Artesão em Foco", "Coleção de Produtos Artesanais", "Produto Artesanal Identitário", "Branding no Artesanato"],
+  },
+  {
+    title: "Ebooks",
+    description: "2 materiais para baixar e aplicar.",
+    badge: "Gratuito",
+    icon: BookOpenText,
+    list: ["Moda & Crochê: 10 ideias inovadoras para crocheterias contemporâneas", "Guia de Fotografia para Artesanato"],
+  },
+  {
+    title: "Comunidade no WhatsApp",
+    description:
+      "O grupo onde tudo acontece. É aqui que as artesãs se encontram, trocam, se apoiam e crescem juntas. Novidades, conteúdos e oportunidades chegam primeiro aqui.",
+    badge: "Gratuito",
+    icon: MessageCircleHeart,
+  },
+] as const;
+
+const tickerTopics = [
   "Aprendizado",
   "Comunidade",
   "Curadoria",
   "Pertencimento",
-  "ArtesanatoInteligente",
-  "Técnicas tradicionais",
-  "Branding",
-  "Valorização",
-  "Precificação",
+  "ArtesanatoInteligente®",
+  "Guardiãs do Ofício",
+  "Workshops",
 ] as const;
 
-const features = [
+const beginnersBullets = [
+  "Você se sente perdida, confusa, insegura em relação ao seu artesanato e não sabe por onde começar.",
+  "Você sente que o seu trabalho vale muito mais do que consegue cobrar, mas ainda não encontrou um caminho claro para mudar isso.",
+  "Você vê outras artesãs crescendo, sendo reconhecidas e vendendo mais, e quer entender o que elas estão fazendo de diferente.",
+  "Você já tentou buscar conteúdo por conta própria, mas pouca coisa está organizada para quem faz artesanato de verdade.",
+  "Você quer parar de empreender sozinha e ter, finalmente, um espaço seguro para aprender, crescer e se conectar.",
+] as const;
+
+const alumniBullets = [
+  "Você quer dar continuidade no desenvolvimento de cada etapa do Método ArtesanatoInteligente®.",
+  "Você quer se conectar com outras artesãs de todo o Brasil que viveram a mesma experiência.",
+  "Você quer continuar aplicando o método no dia a dia, com conteúdo e apoio à disposição.",
+] as const;
+
+const featureCards = [
   {
+    title: "Workshops online em pequenas turmas",
+    description:
+      "Os workshops da Fernanda são abertos ao longo do ano. Cada turma é pequena por escolha: para que cada artesã seja vista, ouvida e acompanhada de verdade. Entre na lista de espera, pois quando abrem, enchem rápido.",
+    badge: "Em breve — disponível para compra",
+    icon: Star,
+    cta: { label: "Quero entrar na lista de espera →", href: "#cadastro", style: "button" as const },
+    fullWidth: true,
+  },
+  {
+    title: "Curadoria de Conteúdos",
+    description:
+      "Acesso gratuito a conteúdos selecionados em vídeo e PDF das áreas fundamentais do negócio artesanal: precificação, vendas, Canva, legislação, redes sociais, embalagem e marketplaces. Avaliado, testado e escolhido a dedo.",
+    badge: "Gratuito",
+    badgeClass: "bg-[hsl(var(--brand-mint)/0.2)] text-[hsl(var(--brand-mint))]",
     icon: Crown,
-    title: "Curadoria de conteúdo selecionado pela Fernanda",
-    description:
-      "Nada de sair garimpando na internet. Aqui o conteúdo já foi avaliado, testado e escolhido. Você acessa direto o que importa, organizado por tema.",
-    tags: ["Como precificar", "Técnicas de vendas", "Como usar o Canva", "Legislação do artesanato", "Aulas gratuitas da Fernanda"],
   },
   {
-    icon: Tv,
-    title: "Videoaulas exclusivas",
-    description:
-      "Aulas da Fernanda sobre design, branding, fotografia e valorização do artesanato — organizadas por tema, acessadas no seu ritmo. O mesmo conteúdo que já transformou artesãs em todo o Brasil, agora disponível para você a qualquer hora.",
-    tags: ["Aulas por tema", "No seu ritmo", "Do básico ao avançado"],
+    title: "Videoaulas",
+    description: "Aulas da Fernanda sobre design, branding, fotografia e valorização do artesanato, no seu ritmo, do básico ao avançado.",
+    badge: "Gratuito",
+    badgeClass: "bg-[hsl(var(--brand-mint)/0.2)] text-[hsl(var(--brand-mint))]",
+    icon: Tv2,
   },
   {
-    icon: MessageCircleHeart,
     title: "Comunidade no WhatsApp",
-    description:
-      "Assim que você entrar, você recebe o link do grupo exclusivo. Um espaço para trocar, perguntar, divulgar o seu trabalho e se inspirar com o das outras.",
-    tags: ["Troca real", "Apoio", "Pertencimento"],
+    description: "Assim que você entrar, recebe o link do grupo. Um espaço para trocar, perguntar, divulgar o seu trabalho e se inspirar.",
+    badge: "Gratuito",
+    badgeClass: "bg-[hsl(var(--brand-mint)/0.2)] text-[hsl(var(--brand-mint))]",
+    icon: MessageCircleHeart,
   },
   {
-    icon: Users,
-    title: "Mentoria individual com a Fernanda",
+    title: "Guardiãs do Ofício",
     description:
-      "No seu primeiro acesso, você recebe um convite especial para uma sessão de mentoria individual com a Fernanda, com condição exclusiva de lançamento. Uma hora dedicada ao seu trabalho, à sua história e ao seu próximo passo.",
-    tags: ["Mentoria paga", "Plano premium", "Convite no 1º acesso"],
+      "Projeto criado especialmente para promover artesãs detentoras de saberes tradicionais e técnicas cheias de valor. Artesãs são convidadas a ensinar suas técnicas em videoaulas produzidas pela Fernanda.",
+    badge: "Em breve — disponível para compra",
+    icon: UsersRound,
+    ctas: [
+      { label: "Quero ser avisada", href: "#cadastro" },
+      { label: "Quero me candidatar como professora", href: "#cadastro" },
+    ],
+  },
+  {
+    title: "Mentoria de Diagnóstico com a Fernanda",
+    description: "Uma hora dedicada a entender sua realidade a fundo e te entregar um panorama com orientações e caminhos para os próximos passos.",
+    badge: "Disponível para compra",
+    badgeClass: "bg-[hsl(var(--brand-mint)/0.2)] text-[hsl(var(--brand-mint))]",
+    icon: Sparkles,
+    cta: { label: "Disponível para compra →", href: "#cadastro", style: "link" as const },
+  },
+  {
+    title: "Livro — Objeto & Cura",
+    description: "O livro da Fernanda Sklovsky. Uma obra sobre o artesanato, o objeto e o que ele carrega. Em breve disponível aqui.",
+    badge: "Em breve — disponível para compra",
+    icon: BookOpenText,
+    cta: { label: "Quero ser avisada →", href: "#cadastro", style: "link" as const },
+    fullWidth: true,
   },
 ] as const;
 
-function digitsOnly(value: string) {
-  return value.replace(/\D/g, "");
-}
+const socialProofSlides = [
+  {
+    id: "print-1",
+    src: "/prova-social-crop/prova-1.jpg",
+    alt: "Depoimento em áudio transcrito no WhatsApp sobre resultados e agradecimento pelo trabalho da Fernanda.",
+    width: 1160,
+    height: 1470,
+    imageClass: "h-[240px] w-auto sm:h-[280px]",
+  },
+  {
+    id: "print-2",
+    src: "/prova-social-crop/prova-2.jpg",
+    alt: "Mensagens no WhatsApp elogiando as videoaulas, a didática e o conteúdo oferecido.",
+    width: 740,
+    height: 740,
+    imageClass: "h-[150px] w-auto sm:h-[180px]",
+  },
+  {
+    id: "print-3",
+    src: "/prova-social/prova-3.png.jpeg",
+    alt: "Mensagens no WhatsApp relatando que as aulas trouxeram informações úteis e resultados práticos no negócio artesanal.",
+    width: 740,
+    height: 1600,
+    imageClass: "h-[280px] w-auto sm:h-[340px]",
+  },
+  {
+    id: "print-4",
+    src: "/prova-social-crop/prova-4.jpg",
+    alt: "Comentário em rede social descrevendo o workshop como transformador para a forma de pensar o trabalho artesanal.",
+    width: 600,
+    height: 430,
+    imageClass: "h-[120px] w-auto sm:h-[148px]",
+  },
+  {
+    id: "print-5",
+    src: "/prova-social-crop/prova-5.jpg",
+    alt: "Mensagem agradecendo as orientações da Fernanda e contando resultados obtidos após aplicar o aprendizado.",
+    width: 600,
+    height: 700,
+    imageClass: "h-[170px] w-auto sm:h-[210px]",
+  },
+  {
+    id: "print-6",
+    src: "/prova-social-crop/prova-6.jpg",
+    alt: "Mensagem no WhatsApp dizendo que as aulas foram fantásticas e que o ensinamento da Fernanda fica marcado.",
+    width: 580,
+    height: 620,
+    imageClass: "h-[160px] w-auto sm:h-[190px]",
+  },
+] as const;
 
-function formatWhatsApp(value: string) {
-  const digits = digitsOnly(value).slice(0, 11);
-  if (digits.length <= 2) return digits ? `(${digits}` : "";
-  const ddd = digits.slice(0, 2);
-  const rest = digits.slice(2);
-  if (rest.length <= 4) return `(${ddd}) ${rest}`;
-  if (rest.length <= 8) return `(${ddd}) ${rest.slice(0, 4)}-${rest.slice(4)}`;
-  return `(${ddd}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
+const upcomingCards = [
+  {
+    title: "Guardiãs do Ofício",
+    badges: ["Em produção", "Em breve"],
+    description:
+      "Espaço criado para o resgate e repasse do conhecimento artesanal tradicional e geração de renda. A Fernanda e equipe ficam responsáveis pela produção e comercialização. A artesã entra como especialista, tem seu trabalho divulgado e recebe pelas vendas. A primeira aula é de frivolité, uma técnica delicada e rara que corre o risco de se perder.",
+    cta: "Quero ser avisada →",
+  },
+  {
+    title: "Mais conteúdo, mais conexões, mais possibilidades",
+    badges: ["Em breve"],
+    description:
+      "Novas categorias de curadoria, novas artesãs convidadas, novos formatos de aprendizado. A comunidade cresce com quem faz parte dela, e você, que está entrando agora, ajuda a construir o que vem pela frente.",
+  },
+] as const;
+
+const authorityStats = [
+  { value: 25, suffix: " anos", label: "Anos de atuação" },
+  { value: 3000, prefix: "+", label: "Artesãs capacitadas" },
+  { value: 100, prefix: "+", label: "Municípios pelo Brasil" },
+  { value: 12, label: "Estados" },
+] as const;
+
+function AnimatedCounter({ value, label, prefix = "", suffix = "", divider = false }: { value: number; label: string; prefix?: string; suffix?: string; divider?: boolean }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+
+    let frameId = 0;
+    let started = false;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting || started) return;
+        started = true;
+        const duration = 1200;
+        const start = performance.now();
+
+        const tick = (now: number) => {
+          const progress = Math.min((now - start) / duration, 1);
+          setDisplayValue(Math.round(progress * value));
+          if (progress < 1) frameId = window.requestAnimationFrame(tick);
+        };
+
+        frameId = window.requestAnimationFrame(tick);
+      },
+      { threshold: 0.35 },
+    );
+
+    observer.observe(element);
+
+    return () => {
+      observer.disconnect();
+      if (frameId) window.cancelAnimationFrame(frameId);
+    };
+  }, [value]);
+
+  return (
+    <div ref={ref} className={`px-4 text-center ${divider ? "counter-divider" : ""}`}>
+      <div className="font-display text-4xl font-extrabold text-[hsl(var(--brand-tan))] sm:text-5xl">
+        {prefix}
+        {displayValue.toLocaleString("pt-BR")}
+        {suffix}
+      </div>
+      <p className="font-display mt-2 text-sm font-bold uppercase tracking-[0.18em] text-[hsl(var(--brand-ink)/0.65)]">{label}</p>
+    </div>
+  );
 }
 
 export default function HomePage() {
-  const router = useRouter();
-  const [signup, setSignup] = useState({ name: "", email: "", phone: "", password: "", confirmPassword: "" });
-  const [signupError, setSignupError] = useState<string | null>(null);
-  const [signupLoading, setSignupLoading] = useState(false);
-  const phoneFormatted = useMemo(() => formatWhatsApp(signup.phone), [signup.phone]);
+  const proofRef = useRef<HTMLDivElement | null>(null);
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  const updateActiveSlide = (container: HTMLDivElement) => {
+    const children = Array.from(container.children) as HTMLElement[];
+    if (!children.length) return;
+
+    const viewportCenter = container.scrollLeft + container.clientWidth / 2;
+    let closestIndex = 0;
+    let closestDistance = Number.POSITIVE_INFINITY;
+
+    children.forEach((child, index) => {
+      const childCenter = child.offsetLeft + child.offsetWidth / 2;
+      const distance = Math.abs(childCenter - viewportCenter);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+
+    setActiveSlide(closestIndex);
+  };
+
+  const scrollToSlide = (index: number) => {
+    const container = proofRef.current;
+    const target = container?.children.item(index) as HTMLElement | null;
+    if (!container || !target) return;
+    container.scrollTo({ left: target.offsetLeft, behavior: "smooth" });
+  };
 
   return (
-    <div className="bg-background">
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-[hsl(var(--premium-sidebar-from))] text-white">
-        <div className="mx-auto flex max-w-[1100px] items-center justify-between gap-4 px-4 py-4 lg:px-8">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="font-serif text-lg font-semibold tracking-tight">Fernanda</span>
-            <Leaf className="h-5 w-5 text-accent" />
-            <span className="font-serif text-lg font-semibold tracking-tight">Sklovsky</span>
+    <div className="landing-section-cream">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#1B2A3B] text-[hsl(var(--brand-sand))]">
+        <div className="landing-shell flex min-h-[80px] items-center justify-between gap-4 py-4">
+          <Link href="/" className="min-w-0">
+            <div className="font-display flex items-center gap-2 text-lg font-semibold tracking-tight sm:text-xl">
+              <span>Fernanda</span>
+              <Star className="h-5 w-5 fill-[hsl(var(--brand-gold))] text-[hsl(var(--brand-gold))]" />
+              <span>Sklovsky</span>
+            </div>
+            <div className="font-serif-accent text-sm italic text-[hsl(var(--brand-sand)/0.84)]">ArtesanatoInteligente®</div>
           </Link>
 
-          <Button
-            asChild
-            className="rounded-full bg-[hsl(var(--brand-gold))] px-5 text-[hsl(var(--brand-ink))] hover:bg-[hsl(var(--brand-gold)/0.92)]"
-          >
+          <Button asChild className="font-display min-h-11 rounded-full bg-[hsl(var(--brand-gold))] px-5 text-base font-bold text-[hsl(var(--brand-ink))] hover:bg-[hsl(var(--brand-gold)/0.92)]">
             <Link href="/login">
               Quero entrar <ArrowRight className="h-4 w-4" />
             </Link>
@@ -95,558 +299,364 @@ export default function HomePage() {
       </header>
 
       <main>
-        <section className="relative overflow-hidden">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 opacity-60"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle at 20% 20%, hsl(var(--brand-tan) / 0.10), transparent 40%), radial-gradient(circle at 85% 25%, hsl(var(--brand-mint) / 0.20), transparent 42%), radial-gradient(circle at 75% 85%, hsl(var(--brand-olive) / 0.10), transparent 40%)",
-            }}
-          />
-
-          <div className="mx-auto grid max-w-[1100px] gap-10 px-4 py-14 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-20">
-            <div className="space-y-8">
-              <p className="text-xs font-semibold uppercase tracking-[0.26em] text-accent">Comunidade ArtesanatoInteligente</p>
-
-              <div className="space-y-5">
-                <h1 className="font-serif text-5xl font-semibold leading-[0.95] tracking-tight text-foreground sm:text-6xl md:text-7xl">
-                  A jornada
-                  <br />
-                  não termina
-                  <br />
-                  <span className="italic text-accent">no workshop.</span>
-                </h1>
-                <p className="max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">
-                  A Comunidade ArtesanatoInteligente é o espaço onde o aprendizado continua — com conteúdo selecionado, conexão com outras artesãs e tudo
-                  que você precisa para crescer, no seu tempo e do seu jeito.
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Button asChild size="lg" className="rounded-full bg-accent text-accent-foreground hover:bg-accent/90">
+        <section className="landing-section-dark">
+          <div className="landing-shell px-0 py-16 sm:py-20">
+            <div className="mx-auto max-w-4xl text-center">
+              <p className="font-display text-sm font-bold uppercase tracking-[0.24em] text-[hsl(var(--brand-gold))]">O QUE VOCÊ TERÁ ACESSO IMEDIATO</p>
+              <h1 className="font-display mt-6 text-4xl font-extrabold leading-[1.04] text-[hsl(var(--brand-sand))] sm:text-5xl lg:text-7xl">
+                Bem-vinda à Comunidade ArtesanatoInteligente®.
+                <br />
+                <span className="font-serif-accent italic text-[hsl(var(--brand-gold))]">Você chegou ao lugar certo.</span>
+              </h1>
+              <p className="mx-auto mt-6 max-w-3xl text-base leading-8 text-white/78 sm:text-lg">
+                Você não está mais sozinha. Aqui você, artesã, vai fazer parte de um espaço seguro, feito especialmente para apoiar a jornada da artesã que quer crescer o seu trabalho,
+                ser reconhecida e valorizada, vender mais e dar os passos para se tornar uma empreendedora criativa que irá viver do seu artesanato.
+              </p>
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Button asChild className="font-display min-h-11 rounded-full bg-[hsl(var(--brand-tan))] px-6 text-base font-bold text-white hover:bg-[hsl(var(--brand-tan)/0.92)]">
                   <a href="#cadastro">
                     Quero fazer parte <ArrowRight className="h-4 w-4" />
                   </a>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="rounded-full bg-background/60">
-                  <Link href="#como-funciona">Quero entender</Link>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="font-display min-h-11 rounded-full border-[hsl(var(--brand-sand)/0.3)] bg-[hsl(var(--brand-sand))] px-6 text-base font-bold text-[hsl(var(--brand-ink))] hover:bg-[hsl(var(--brand-sand)/0.92)]"
+                >
+                  <Link href="/login">Já tenho acesso</Link>
                 </Button>
               </div>
-
-              <p className="text-xs text-muted-foreground">Gratuito para entrar • Simples de usar • Feito para você</p>
             </div>
 
-            <div className="relative">
-              <div className="premium-surface relative overflow-hidden rounded-[32px] p-8">
-                <div
-                  aria-hidden="true"
-                  className="absolute -right-28 -top-28 h-[520px] w-[520px] rounded-full"
-                  style={{ background: "hsl(var(--brand-olive) / 0.12)" }}
-                />
-                <div
-                  aria-hidden="true"
-                  className="absolute -bottom-40 -left-40 h-[520px] w-[520px] rounded-full"
-                  style={{ background: "hsl(var(--brand-mint) / 0.24)" }}
-                />
-
-                <div className="relative space-y-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">O que você encontra aqui</p>
-                  <h2 className="font-serif text-3xl font-semibold text-foreground">Tudo organizado para você aplicar.</h2>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-[22px] border border-border/70 bg-background/70 p-4">
-                      <Crown className="h-5 w-5 text-accent" />
-                      <p className="mt-3 font-medium">Curadoria</p>
-                      <p className="mt-1 text-sm text-muted-foreground">Conteúdo selecionado, sem dispersão.</p>
+            <div className="mt-14 grid gap-4 md:grid-cols-2">
+              {immediateAccessCards.map((card) => {
+                const Icon = card.icon;
+                return (
+                  <article key={card.title} className="rounded-[28px] border border-white/10 bg-white/5 p-6 shadow-premium">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[hsl(var(--brand-gold)/0.12)] text-[hsl(var(--brand-gold))]">
+                        <Icon className="h-6 w-6" />
+                      </div>
+                      <Badge className="font-display bg-[hsl(var(--brand-mint)/0.2)] px-3 py-1 text-[hsl(var(--brand-mint))]">{card.badge}</Badge>
                     </div>
-                    <div className="rounded-[22px] border border-border/70 bg-background/70 p-4">
-                      <Tv className="h-5 w-5 text-accent" />
-                      <p className="mt-3 font-medium">Videoaulas</p>
-                      <p className="mt-1 text-sm text-muted-foreground">No seu ritmo, do básico ao avançado.</p>
-                    </div>
-                    <div className="rounded-[22px] border border-border/70 bg-background/70 p-4">
-                      <Users className="h-5 w-5 text-accent" />
-                      <p className="mt-3 font-medium">Comunidade</p>
-                      <p className="mt-1 text-sm text-muted-foreground">Troca real com pertencimento.</p>
-                    </div>
-                    <div className="rounded-[22px] border border-border/70 bg-background/70 p-4">
-                      <Sparkles className="h-5 w-5 text-accent" />
-                      <p className="mt-3 font-medium">Mentoria</p>
-                      <p className="mt-1 text-sm text-muted-foreground">Convite premium no 1º acesso.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                    <h2 className="font-display mt-5 text-2xl font-bold text-[hsl(var(--brand-sand))]">{card.title}</h2>
+                    <p className="mt-3 text-base leading-7 text-white/74">{card.description}</p>
+                    {"chips" in card ? (
+                      <div className="mt-5 flex flex-wrap gap-2">
+                        {card.chips.map((chip) => (
+                          <span key={chip} className="font-display rounded-full bg-[hsl(var(--brand-gold)/0.12)] px-3 py-1 text-sm font-semibold text-[hsl(var(--brand-gold))]">
+                            {chip}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                    {"list" in card ? (
+                      <ul className="mt-5 space-y-3">
+                        {card.list.map((item) => (
+                          <li key={item} className="flex gap-3 text-base leading-7 text-white/84">
+                            <span className="font-display mt-1 text-[hsl(var(--brand-mint))]">→</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </article>
+                );
+              })}
             </div>
           </div>
         </section>
 
-        <section id="como-funciona" className="bg-[hsl(var(--premium-sidebar-from))] text-white">
-          <div className="mx-auto max-w-[1100px] px-4 pb-16 pt-10 lg:px-8 lg:pb-20">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2 font-serif text-lg font-semibold tracking-tight">
-                Fernanda <Leaf className="h-5 w-5 text-accent" /> Sklovsky
-              </div>
-              <Button
-                asChild
-                className="rounded-full bg-[hsl(var(--brand-gold))] px-5 text-[hsl(var(--brand-ink))] hover:bg-[hsl(var(--brand-gold)/0.92)]"
-              >
-                <Link href="/login">
-                  Quero entrar <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
+        <section className="overflow-hidden bg-[#203244] py-5 text-[hsl(var(--brand-sand))]">
+          <div className="ticker-track gap-6 whitespace-nowrap text-base font-semibold uppercase tracking-[0.18em] opacity-90">
+            {[...tickerTopics, ...tickerTopics].map((item, index) => (
+              <span key={`${item}-${index}`} className="font-display inline-flex items-center gap-6">
+                {item}
+                <span className="text-[hsl(var(--brand-gold))]">·</span>
+              </span>
+            ))}
+          </div>
+        </section>
 
-            <div className="mt-8 overflow-auto rounded-[24px] bg-[hsl(var(--brand-tan)/0.95)] px-4 py-3">
-              <div className="flex min-w-max items-center gap-6">
-                {topics.map((topic) => (
-                  <a key={topic} href="#tudo-em-um-so-lugar" className="text-xs font-semibold uppercase tracking-[0.22em] text-[hsl(var(--brand-ink))]">
-                    {topic}
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-10 text-center">
-              <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[hsl(var(--brand-gold))]">Este espaço é para você</p>
-              <h2 className="mt-6 font-serif text-5xl font-semibold leading-tight tracking-tight sm:text-6xl">
-                Você chegou
+        <section className="landing-section-cream py-16 sm:py-20">
+          <div className="landing-shell">
+            <div className="mx-auto max-w-4xl text-center">
+              <p className="font-display text-base font-extrabold uppercase tracking-[0.22em] text-[hsl(var(--brand-tan))]">ESTE ESPAÇO É PARA VOCÊ</p>
+              <h2 className="font-display mt-6 text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl">
+                Aqui trabalhamos o artesanato
                 <br />
-                ao lugar <span className="italic text-[hsl(var(--brand-gold))]">certo.</span>
+                de forma <span className="font-serif-accent italic font-bold text-[hsl(var(--brand-tan))]">inteligente e estratégica.</span>
               </h2>
-              <p className="mx-auto mt-6 max-w-3xl text-base leading-relaxed text-white/75 md:text-lg">
-                Esta comunidade foi criada para quem leva o artesanato a sério — seja você uma artesã que acabou de viver uma transformação numa capacitação,
-                ou alguém que nunca para de aprender e buscar o próximo nível.
+              <p className="mx-auto mt-6 max-w-3xl text-base leading-8 text-[hsl(var(--brand-ink)/0.72)] sm:text-lg">
+                Esta comunidade foi criada para quem trabalha com artesanato e está pronta para dar os próximos passos na sua jornada empreendedora criativa, independentemente de onde você
+                se encontra hoje.
               </p>
             </div>
 
-            <div className="mt-12 grid gap-10 lg:grid-cols-2">
-              <div className="space-y-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.26em] text-accent">Você passou por uma capacitação</p>
-                <ul className="space-y-4 text-sm text-white/85">
-                  <li className="flex gap-3">
-                    <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[hsl(var(--brand-gold))]" />
-                    <span>Você viveu algo importante naquelas horas — e não quer que aquilo fique só no workshop.</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[hsl(var(--brand-gold))]" />
-                    <span>Você quer continuar aprendendo com a Fernanda, acessar os conteúdos do método e aplicar no dia a dia.</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[hsl(var(--brand-gold))]" />
-                    <span>Você quer se conectar com as outras artesãs que estiveram na mesma sala — e com tantas outras espalhadas pelo Brasil.</span>
-                  </li>
+            <div className="mt-12 grid gap-6 lg:grid-cols-2">
+              <article className="rounded-[30px] border border-[hsl(var(--brand-tan)/0.15)] bg-[hsl(var(--brand-tan)/0.08)] p-7 shadow-premium">
+                <p className="font-display text-sm font-extrabold uppercase tracking-[0.2em] text-[hsl(var(--brand-tan))]">VOCÊ ESTÁ CHEGANDO AGORA</p>
+                <ul className="mt-6 space-y-4 text-base leading-7 text-[hsl(var(--brand-ink)/0.82)]">
+                  {beginnersBullets.map((bullet, index) => (
+                    <li key={bullet} className="flex gap-3">
+                      <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-[hsl(var(--brand-tan))]" />
+                      <span className={index === 0 ? "font-semibold text-[hsl(var(--brand-ink))]" : ""}>{bullet}</span>
+                    </li>
+                  ))}
                 </ul>
-              </div>
+              </article>
 
-              <div className="space-y-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.26em] text-accent">Você quer sempre se aprimorar</p>
-                <ul className="space-y-4 text-sm text-white/85">
-                  <li className="flex gap-3">
-                    <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[hsl(var(--brand-gold))]" />
-                    <span>Você não se contenta em saber só o básico — quer entender de branding, precificação, fotografia, vendas e muito mais.</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[hsl(var(--brand-gold))]" />
-                    <span>Você busca referências de qualidade, não qualquer conteúdo da internet — quer o que foi selecionado por quem entende.</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[hsl(var(--brand-gold))]" />
-                    <span>Você quer estar conectada a uma comunidade ativa, trocar experiências, divulgar o seu trabalho e se inspirar com o das outras.</span>
-                  </li>
+              <article className="rounded-[30px] border border-[hsl(var(--brand-ink)/0.08)] bg-white p-7 shadow-premium">
+                <p className="font-display text-sm font-extrabold uppercase tracking-[0.2em] text-[hsl(var(--brand-ink))]">VOCÊ JÁ PASSOU POR UMA CAPACITAÇÃO COMIGO</p>
+                <ul className="mt-6 space-y-4 text-base leading-7 text-[hsl(var(--brand-ink)/0.82)]">
+                  {alumniBullets.map((bullet) => (
+                    <li key={bullet} className="flex gap-3">
+                      <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-[hsl(var(--brand-gold))]" />
+                      <span>{bullet}</span>
+                    </li>
+                  ))}
                 </ul>
-              </div>
+              </article>
             </div>
           </div>
         </section>
 
-        <section id="tudo-em-um-so-lugar" className="bg-background">
-          <div className="mx-auto max-w-[1100px] px-4 py-16 lg:px-8 lg:py-20">
-            <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-              <div className="space-y-6">
-                <p className="text-xs font-semibold uppercase tracking-[0.26em] text-accent">O que você encontra aqui</p>
-                <h2 className="font-serif text-5xl font-semibold leading-tight tracking-tight sm:text-6xl">
-                  Tudo em
-                  <br />
-                  <span className="italic text-accent">um só lugar.</span>
-                </h2>
-                <p className="max-w-md text-base leading-relaxed text-muted-foreground">
-                  Sem precisar garimpar na internet. Sem dispersão. O que está aqui foi escolhido a dedo — e vai crescendo com a comunidade.
-                </p>
+        <section className="landing-section-dark py-16 sm:py-20">
+          <div className="landing-shell">
+            <div className="max-w-4xl">
+              <p className="font-display text-sm font-bold uppercase tracking-[0.24em] text-[hsl(var(--brand-gold))]">O QUE VOCÊ ENCONTRA AQUI</p>
+              <h2 className="font-display mt-5 text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl">
+                Tudo em <span className="font-serif-accent italic text-[hsl(var(--brand-gold))]">um só lugar.</span>
+              </h2>
+              <p className="mt-6 max-w-3xl text-base leading-8 text-white/78 sm:text-lg">
+                Chega de garimpar na internet, de dar voltas e voltas atrás de conteúdos e continuar se sentindo perdida como se não saísse do lugar. Tudo que está aqui foi escolhido a dedo
+                e com carinho para te ajudar a crescer.
+              </p>
+              <p className="mt-4 text-base leading-8 text-white/78">
+                <strong className="font-display text-[hsl(var(--brand-gold))]">Fazer parte é gratuito</strong> e já te dá acesso à curadoria de conteúdos, videoaulas, ebooks e ao grupo do
+                WhatsApp. Workshops, mentoria, aulas das artesãs e o livro estão disponíveis para compra.
+              </p>
+            </div>
 
-                <div className="premium-surface rounded-[28px] p-6">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Acesso rápido</p>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <Button asChild variant="outline" className="justify-start rounded-[18px] bg-background/70">
-                      <Link href="/membros/curadoria">
-                        <Crown className="h-4 w-4" />
-                        Curadoria
-                      </Link>
-                    </Button>
-                    <Button asChild variant="outline" className="justify-start rounded-[18px] bg-background/70">
-                      <Link href="/membros/videoaulas">
-                        <Tv className="h-4 w-4" />
-                        Videoaulas
-                      </Link>
-                    </Button>
-                    <Button asChild variant="outline" className="justify-start rounded-[18px] bg-background/70">
-                      <Link href="/membros/ebooks">
-                        <BookOpen className="h-4 w-4" />
-                        Ebooks
-                      </Link>
-                    </Button>
-                    <Button asChild variant="outline" className="justify-start rounded-[18px] bg-background/70">
-                      <Link href="/membros/whatsapp">
-                        <MessageCircleHeart className="h-4 w-4" />
-                        WhatsApp
-                      </Link>
-                    </Button>
+            <div className="mt-12 grid gap-5 lg:grid-cols-2">
+              {featureCards.map((card) => {
+                const Icon = card.icon;
+                const isFullWidth = "fullWidth" in card && card.fullWidth;
+                const badgeClass = "badgeClass" in card ? card.badgeClass : undefined;
+                return (
+                  <article
+                    key={card.title}
+                    className={`rounded-[30px] border border-white/10 bg-white/5 p-6 shadow-premium ${isFullWidth ? "lg:col-span-2" : ""}`}
+                  >
+                    <Badge className={`font-display px-4 py-1.5 text-sm font-bold ${badgeClass ?? "bg-[hsl(var(--brand-gold)/0.15)] text-[hsl(var(--brand-gold))]"}`}>{card.badge}</Badge>
+                    <div className="mt-5 flex items-start gap-4">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/6 text-[hsl(var(--brand-gold))]">
+                        <Icon className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <h3 className="font-display text-2xl font-bold text-[hsl(var(--brand-sand))]">{card.title}</h3>
+                        <p className="mt-3 text-base leading-7 text-white/76">{card.description}</p>
+                      </div>
+                    </div>
+                    {"cta" in card && card.cta?.style === "button" ? (
+                      <div className="mt-6">
+                        <Button asChild className="font-display min-h-11 rounded-full bg-[hsl(var(--brand-gold))] px-6 text-base font-bold text-[hsl(var(--brand-ink))] hover:bg-[hsl(var(--brand-gold)/0.92)]">
+                          <a href={card.cta.href}>{card.cta.label}</a>
+                        </Button>
+                      </div>
+                    ) : null}
+                    {"cta" in card && card.cta?.style === "link" ? (
+                      <div className="mt-6">
+                        <a href={card.cta.href} className="font-display text-base font-bold text-[hsl(var(--brand-gold))] hover:opacity-90">
+                          {card.cta.label}
+                        </a>
+                      </div>
+                    ) : null}
+                    {"ctas" in card && card.ctas ? (
+                      <div className="mt-6 flex flex-wrap gap-3">
+                        {card.ctas.map((cta) => (
+                          <a
+                            key={cta.label}
+                            href={cta.href}
+                            className="font-display inline-flex min-h-11 items-center rounded-full border border-white/18 px-5 py-2 text-base font-semibold text-[hsl(var(--brand-sand))] hover:bg-white/10"
+                          >
+                            {cta.label}
+                          </a>
+                        ))}
+                      </div>
+                    ) : null}
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        <section className="landing-section-cream py-16 sm:py-20">
+          <div className="landing-shell">
+            <div className="text-center">
+              <p className="font-display text-sm font-extrabold uppercase tracking-[0.24em] text-[hsl(var(--brand-tan))]">QUEM JÁ VIVEU ESSA TRANSFORMAÇÃO</p>
+              <h2 className="font-display mt-5 text-4xl font-extrabold leading-tight sm:text-5xl">O que as artesãs estão dizendo</h2>
+            </div>
+
+            <div ref={proofRef} className="mt-10 flex items-start gap-5 overflow-x-auto pb-4" onScroll={(event) => updateActiveSlide(event.currentTarget)}>
+              {socialProofSlides.map((slide) => (
+                <button key={slide.id} type="button" onClick={() => scrollToSlide(socialProofSlides.findIndex((item) => item.id === slide.id))} className="shrink-0 text-left">
+                  <div className="overflow-hidden rounded-[18px] bg-white shadow-[0_10px_24px_rgba(27,42,59,0.10)]">
+                    <Image
+                      src={slide.src}
+                      alt={slide.alt}
+                      width={slide.width}
+                      height={slide.height}
+                      className={`block ${slide.imageClass}`}
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 28vw, 18vw"
+                    />
                   </div>
-                  <p className="mt-4 text-xs text-muted-foreground">
-                    Se você ainda não tem acesso, clique em <span className="font-semibold text-foreground">Quero fazer parte</span> lá no topo.
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {features.map((feature) => {
-                  const Icon = feature.icon;
-                  return (
-                    <Card key={feature.title} className="rounded-[28px] border-border/70 bg-background/70 shadow-sm">
-                      <CardContent className="p-7">
-                        <div className="flex items-start gap-4">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-accent/15 text-accent">
-                            <Icon className="h-6 w-6" />
-                          </div>
-                          <div className="min-w-0 flex-1 space-y-3">
-                            <p className="text-base font-semibold text-foreground">{feature.title}</p>
-                            <p className="text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
-                            <div className="flex flex-wrap gap-2">
-                              {feature.tags.map((tag) => (
-                                <span
-                                  key={tag}
-                                  className="rounded-full border border-border/70 bg-background/70 px-3 py-1 text-xs font-medium text-muted-foreground"
-                                >
-                                  {tag}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="o-que-esta-por-vir" className="bg-[hsl(var(--premium-sidebar-from))] text-white">
-          <div className="mx-auto max-w-[1100px] px-4 py-16 lg:px-8 lg:py-20">
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[hsl(var(--brand-gold))]">O que está por vir</p>
-            <h2 className="mt-6 font-serif text-5xl font-semibold leading-tight tracking-tight sm:text-6xl">
-              A comunidade
-              <br />
-              que <span className="italic text-[hsl(var(--brand-gold))]">cresce com você.</span>
-            </h2>
-            <p className="mt-6 max-w-3xl text-base leading-relaxed text-white/75 md:text-lg">
-              Quem entra agora entra no começo de algo que vai muito além. A Comunidade ArtesanatoInteligente está em construção — e cada nova etapa foi
-              pensada para dar ainda mais valor ao que você sabe e ao que você faz.
-            </p>
-
-            <div className="mt-12 grid gap-8 lg:grid-cols-2 lg:items-start">
-              <div className="rounded-[28px] border border-white/10 bg-white/5 p-8">
-                <p className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[hsl(var(--brand-gold))]">
-                  Em produção • Em breve
-                </p>
-                <p className="mt-4 text-lg font-semibold">Videoaulas de técnicas tradicionais — ensinadas pelas próprias artesãs</p>
-                <p className="mt-4 text-sm leading-relaxed text-white/75">
-                  A primeira gravação já está acontecendo: uma aula completa de frivolité — uma técnica delicada e rara que corre o risco de se perder. A
-                  artesã que ensina é mestre no ofício. A Fernanda cuida da produção. E a aula fica disponível para toda a comunidade.
-                </p>
-                <p className="mt-4 text-sm leading-relaxed text-white/75">
-                  Mais artesãs serão convidadas. Mais técnicas serão gravadas. Porque preservar um saber é também garantir que ele continue vivo — e que
-                  quem o domina seja reconhecida e remunerada por isso.
-                </p>
-              </div>
-
-              <div className="rounded-[28px] border border-white/10 bg-white/5 p-8">
-                <p className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[hsl(var(--brand-gold))]">
-                  Em breve
-                </p>
-                <p className="mt-4 text-lg font-semibold">Mais conteúdo, mais conexões, mais possibilidades</p>
-                <p className="mt-4 text-sm leading-relaxed text-white/75">
-                  Novas categorias de curadoria, novas artesãs convidadas, novos formatos de aprendizado. A comunidade cresce com quem faz parte dela — e
-                  você, que está entrando agora, ajuda a construir o que vem pela frente.
-                </p>
-              </div>
+                </button>
+              ))}
             </div>
 
-            <div className="mt-12 flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className="rounded-full bg-[hsl(var(--brand-gold))] text-[hsl(var(--brand-ink))] hover:bg-[hsl(var(--brand-gold)/0.92)]">
-                <a href="#cadastro">
-                  Quero fazer parte <ArrowRight className="h-4 w-4" />
-                </a>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="rounded-full border-white/15 bg-transparent text-white hover:bg-white/10">
-                <Link href="/login">Já tenho acesso</Link>
-              </Button>
-            </div>
-          </div>
-        </section>
-
-        <section id="quem-criou" className="bg-background">
-          <div className="mx-auto max-w-[1100px] px-4 py-16 lg:px-8 lg:py-20">
-            <div className="grid gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
-              <div className="space-y-6">
-                <p className="text-xs font-semibold uppercase tracking-[0.26em] text-accent">Quem criou esta comunidade</p>
-                <h2 className="font-serif text-6xl font-semibold leading-[0.95] tracking-tight text-foreground">
-                  Fernanda
-                  <br />
-                  <span className="italic text-accent">Sklovsky</span>
-                </h2>
-                <p className="max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
-                  Há mais de 25 anos, Fernanda Sklovsky percorre o Brasil ao lado de artesãs e artesãos — trabalhando onde o design e o artesanato se
-                  encontram com a identidade cultural e a geração de renda. Mestre em Design Estratégico, criou o Método ArtesanatoInteligente a partir de
-                  uma convicção simples e profunda: a pessoa vem antes do produto.
-                </p>
-              </div>
-
-              <div className="space-y-6">
-                <div className="rounded-[28px] border border-border/70 bg-background/70 p-8">
-                  <p className="border-l-2 border-accent pl-5 font-serif text-xl italic leading-relaxed text-foreground">
-                    “O que falta nesses produtos não é técnica. É identidade. É história. E essas são coisas que cada uma já tem — só ainda não sabe que
-                    tem.”
-                  </p>
-                  <p className="mt-6 text-sm leading-relaxed text-muted-foreground">
-                    O método já percorreu mais de 60 municípios gaúchos, foi desenvolvido em parceria com o Sebrae e alcançou mais de 1.500 artesãs
-                    capacitadas diretamente. A Comunidade ArtesanatoInteligente nasceu para que esse trabalho continue — agora com um espaço permanente,
-                    acessível e em constante crescimento.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-12 grid gap-4 rounded-[28px] border border-border/70 bg-background/70 p-8 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                { value: "25", label: "anos de atuação" },
-                { value: "+1.500", label: "artesãs capacitadas" },
-                { value: "+60", label: "municípios percorridos" },
-                { value: "+10", label: "estados no Brasil" },
-              ].map((stat) => (
-                <div key={stat.label} className="text-center">
-                  <p className="text-3xl font-semibold text-accent">{stat.value}</p>
-                  <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{stat.label}</p>
-                </div>
+            <div className="mt-6 flex items-center justify-center gap-3">
+              {socialProofSlides.map((slide, index) => (
+                <button
+                  key={slide.id}
+                  type="button"
+                  onClick={() => scrollToSlide(index)}
+                  className={`h-3 w-3 rounded-full transition ${activeSlide === index ? "bg-[hsl(var(--brand-tan))]" : "bg-[hsl(var(--brand-ink)/0.16)]"}`}
+                  aria-label={`Ir para o depoimento ${index + 1}`}
+                />
               ))}
             </div>
           </div>
         </section>
 
-        <section id="primeiro-acesso" className="bg-background">
-          <div className="mx-auto max-w-[1100px] px-4 pb-16 lg:px-8 lg:pb-20">
-            <div className="grid gap-12 lg:grid-cols-[1fr_0.9fr] lg:items-start">
-              <div className="space-y-6">
-                <p className="text-xs font-semibold uppercase tracking-[0.26em] text-accent">Primeiro acesso</p>
-                <h2 className="font-serif text-5xl font-semibold leading-tight tracking-tight sm:text-6xl">
-                  Uma hora
-                  <br />
-                  só sua, com
-                  <br />
-                  <span className="italic text-accent">a Fernanda.</span>
-                </h2>
-                <p className="max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
-                  Quando você faz seu primeiro acesso à comunidade, recebe um convite para uma mentoria individual. Uma conversa real, personalizada para o
-                  seu trabalho, a sua história e o seu momento.
-                </p>
+        <section className="landing-section-dark py-16 sm:py-20">
+          <div className="landing-shell">
+            <div className="max-w-4xl">
+              <p className="font-display text-sm font-bold uppercase tracking-[0.24em] text-[hsl(var(--brand-gold))]">O QUE ESTÁ POR VIR</p>
+              <h2 className="font-display mt-5 text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl">
+                A comunidade que <span className="font-serif-accent italic text-[hsl(var(--brand-gold))]">cresce com você.</span>
+              </h2>
+              <p className="mt-6 max-w-3xl text-base leading-8 text-white/78 sm:text-lg">
+                Quem entra agora entra no começo de algo que vai muito além. Cada nova etapa foi pensada para dar ainda mais valor ao que você sabe e ao que você faz.
+              </p>
+            </div>
 
-                <ul className="space-y-3 text-sm text-muted-foreground">
-                  {[
-                    "Análise do seu trabalho e da sua trajetória",
-                    "Orientações de branding, identidade e posicionamento",
-                    "Como precificar e valorizar o que você cria",
-                    "Diagnóstico com base no Método ArtesanatoInteligente",
-                    "Agendamento direto pelo WhatsApp, no seu horário",
-                  ].map((item) => (
-                    <li key={item} className="flex gap-3">
-                      <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-accent" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
+            <div className="mt-12 grid gap-5 lg:grid-cols-2">
+              {upcomingCards.map((card) => (
+                <article key={card.title} className="rounded-[30px] border border-white/10 bg-white/5 p-6 shadow-premium">
+                  <div className="flex flex-wrap gap-2">
+                    {card.badges.map((badge) => (
+                      <Badge
+                        key={badge}
+                        className={`font-display px-4 py-1.5 text-sm font-bold ${badge === "Em produção" ? "bg-[hsl(var(--brand-blush)/0.18)] text-[hsl(var(--brand-blush))]" : "bg-[hsl(var(--brand-gold)/0.15)] text-[hsl(var(--brand-gold))]"}`}
+                      >
+                        {badge}
+                      </Badge>
+                    ))}
+                  </div>
+                  <h3 className="font-display mt-5 text-2xl font-bold text-[hsl(var(--brand-sand))]">{card.title}</h3>
+                  <p className="mt-4 text-base leading-7 text-white/76">{card.description}</p>
+                  {"cta" in card && card.cta ? (
+                    <div className="mt-6">
+                      <a href="#cadastro" className="font-display text-base font-bold text-[hsl(var(--brand-gold))] hover:opacity-90">
+                        {card.cta}
+                      </a>
+                    </div>
+                  ) : null}
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="landing-section-cream py-16 sm:py-20">
+          <div className="landing-shell">
+            <p className="font-display text-sm font-extrabold uppercase tracking-[0.24em] text-[hsl(var(--brand-tan))]">QUEM CRIOU ESTA COMUNIDADE</p>
+            <div className="mt-8 grid gap-5 rounded-[30px] border border-[hsl(var(--brand-ink)/0.08)] bg-white px-4 py-7 shadow-premium sm:grid-cols-2 lg:grid-cols-4 lg:px-6">
+              {authorityStats.map((stat, index) => {
+                const prefix = "prefix" in stat ? stat.prefix : "";
+                const suffix = "suffix" in stat ? stat.suffix : "";
+                return <AnimatedCounter key={stat.label} value={stat.value} label={stat.label} prefix={prefix} suffix={suffix} divider={index !== authorityStats.length - 1} />;
+              })}
+            </div>
+
+            <div className="mt-12 grid gap-7 lg:grid-cols-2">
+              <div className="rounded-[30px] border border-[hsl(var(--brand-ink)/0.08)] bg-white p-7 shadow-premium">
+                <h2 className="font-display text-4xl font-extrabold leading-tight sm:text-5xl">
+                  Fernanda
+                  <br />
+                  <span className="font-serif-accent italic text-[hsl(var(--brand-tan))]">Sklovsky</span>
+                </h2>
+                <p className="mt-5 text-base leading-8 text-[hsl(var(--brand-ink)/0.78)]">
+                  Há mais de 25 anos, Fernanda Sklovsky percorre o Brasil ao lado de artesãs e artesãos, trabalhando onde o design e o artesanato se encontram com a identidade cultural e a
+                  geração de renda. Mestre em Design Estratégico, criou o Método ArtesanatoInteligente® a partir de uma convicção simples e profunda: a pessoa vem antes do produto.
+                </p>
               </div>
 
-              <div className="premium-surface overflow-hidden rounded-[28px]">
-                <div className="bg-[hsl(var(--premium-sidebar-from))] p-8 text-white">
-                  <p className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[hsl(var(--brand-gold))]">
-                    Oferta de lançamento
-                  </p>
-                  <p className="mt-4 text-sm text-white/70">De R$ 400,00</p>
-                  <p className="mt-2 text-5xl font-semibold tracking-tight text-[hsl(var(--brand-gold))]">R$ 197</p>
-                  <p className="mt-4 text-sm text-white/75">Sessão de 1 hora via vídeo</p>
-                  <p className="mt-1 text-xs text-white/60">Condição exclusiva para membros da comunidade</p>
-
-                  <Button
-                    asChild
-                    size="lg"
-                    className="mt-8 w-full rounded-full bg-[hsl(var(--brand-gold))] text-[hsl(var(--brand-ink))] hover:bg-[hsl(var(--brand-gold)/0.92)]"
-                  >
-                    <a href="#cadastro">
-                      Garantir minha vaga <ArrowRight className="h-4 w-4" />
-                    </a>
-                  </Button>
-
-                  <p className="mt-4 text-center text-xs text-white/60">Disponível após o cadastro, no primeiro acesso.</p>
-                </div>
+              <div className="rounded-[30px] border border-[hsl(var(--brand-ink)/0.08)] bg-white p-7 shadow-premium">
+                <p className="font-serif-accent border-l-4 border-[hsl(var(--brand-tan))] pl-5 text-3xl italic leading-[1.3] text-[hsl(var(--brand-ink))]">
+                  “O que falta nesses produtos não é técnica. É identidade. É história. E essas são coisas que cada uma já tem, só ainda não sabe que tem.”
+                </p>
+                <p className="mt-6 text-base leading-8 text-[hsl(var(--brand-ink)/0.78)]">
+                  O Método ArtesanatoInteligente® é validado e utilizado em capacitações exclusivas, com propriedade intelectual reconhecida, pelo Sebrae, pelo Governo do Estado do Rio Grande do Sul,
+                  diretamente com municípios, associações e instituições. Em mais de 25 anos, percorreu mais de 100 municípios pelo Brasil, atuou em 12 estados e alcançou mais de 3.000 artesãs capacitadas diretamente.
+                </p>
               </div>
             </div>
           </div>
         </section>
 
-        <section id="cadastro" className="bg-background">
-          <div className="mx-auto max-w-[1100px] px-4 pt-16 lg:px-8 lg:pt-20">
-            <p className="text-center text-xs font-semibold uppercase tracking-[0.26em] text-accent">Cadastro gratuito</p>
-            <h2 className="mt-6 text-center font-serif text-5xl font-semibold leading-tight tracking-tight sm:text-6xl">
-              Entre para a
-              <br />
-              <span className="italic text-accent">Comunidade AI</span>
-            </h2>
-            <p className="mx-auto mt-6 max-w-2xl text-center text-sm leading-relaxed text-muted-foreground md:text-base">
-              Preencha os campos abaixo para criar a sua conta na Comunidade ArtesanatoInteligente. É gratuito, simples e rápido. Se precisar de ajuda, é
-              só chamar no WhatsApp.
-            </p>
-          </div>
-
-          <div className="mt-12 bg-[hsl(var(--premium-sidebar-from))] py-14">
-            <div className="mx-auto flex max-w-[1100px] justify-center px-4 lg:px-8">
-              <div className="w-full max-w-[520px] rounded-[28px] border border-white/10 bg-white/5 p-8 text-white shadow-premium">
-                <form
-                  className="space-y-5"
-                  onSubmit={async (event) => {
-                    event.preventDefault();
-                    setSignupError(null);
-                    const phoneDigits = digitsOnly(signup.phone);
-                    if (signup.password !== signup.confirmPassword) {
-                      setSignupError("As senhas não conferem.");
-                      return;
-                    }
-                    setSignupLoading(true);
-                    try {
-                      await authService.register({ name: signup.name, email: signup.email, password: signup.password, phone: phoneDigits });
-                      router.push("/membros/onboarding");
-                      router.refresh();
-                    } catch (err) {
-                      setSignupError(err instanceof Error ? err.message : "Falha no cadastro.");
-                    } finally {
-                      setSignupLoading(false);
-                    }
-                  }}
-                >
-                  <div className="space-y-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[hsl(var(--brand-gold))]">Seu nome completo</p>
-                    <Input
-                      placeholder="Digite seu nome"
-                      value={signup.name}
-                      className="border-white/10 bg-white/5 text-white placeholder:text-white/35"
-                      onChange={(event) => setSignup((prev) => ({ ...prev, name: event.target.value }))}
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[hsl(var(--brand-gold))]">Seu e-mail</p>
-                    <Input
-                      placeholder="Digite seu e-mail"
-                      type="email"
-                      value={signup.email}
-                      className="border-white/10 bg-white/5 text-white placeholder:text-white/35"
-                      onChange={(event) => setSignup((prev) => ({ ...prev, email: event.target.value }))}
-                      required
-                    />
-                    <p className="text-xs text-white/60">Será usado para acessar a Comunidade</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[hsl(var(--brand-gold))]">Seu WhatsApp</p>
-                    <Input
-                      placeholder="(00) 00000-0000"
-                      value={phoneFormatted}
-                      inputMode="tel"
-                      className="border-white/10 bg-white/5 text-white placeholder:text-white/35"
-                      onChange={(event) => setSignup((prev) => ({ ...prev, phone: event.target.value }))}
-                      required
-                    />
-                    <p className="text-xs text-white/60">Para receber o link do grupo da Comunidade</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[hsl(var(--brand-gold))]">Crie uma senha</p>
-                    <Input
-                      placeholder="Mínimo de 8 caracteres"
-                      type="password"
-                      value={signup.password}
-                      className="border-white/10 bg-white/5 text-white placeholder:text-white/35"
-                      onChange={(event) => setSignup((prev) => ({ ...prev, password: event.target.value }))}
-                      required
-                      minLength={8}
-                    />
-                    <p className="text-xs text-white/60">Use letras e números — você vai precisar dela para entrar depois</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[hsl(var(--brand-gold))]">Repita a senha</p>
-                    <Input
-                      placeholder="Digite a mesma senha novamente"
-                      type="password"
-                      value={signup.confirmPassword}
-                      className="border-white/10 bg-white/5 text-white placeholder:text-white/35"
-                      onChange={(event) => setSignup((prev) => ({ ...prev, confirmPassword: event.target.value }))}
-                      required
-                      minLength={8}
-                    />
-                  </div>
-
-                  {signupError ? <p className="text-sm text-[hsl(var(--brand-tan))]">{signupError}</p> : null}
-
-                  <Button
-                    className="w-full rounded-full bg-[hsl(var(--brand-gold))] text-[hsl(var(--brand-ink))] hover:bg-[hsl(var(--brand-gold)/0.92)]"
-                    disabled={signupLoading}
-                  >
-                    {signupLoading ? "Criando..." : "Criar minha conta — é grátis ✓"}
-                  </Button>
-
-                  <p className="text-center text-xs text-white/60">Seus dados estão seguros. Não compartilhamos com ninguém e não enviamos spam.</p>
-                </form>
-              </div>
+        <section id="cadastro" className="landing-section-dark py-16 sm:py-20">
+          <div className="landing-shell">
+            <div className="mx-auto max-w-3xl text-center">
+              <p className="font-display text-sm font-bold uppercase tracking-[0.24em] text-[hsl(var(--brand-gold))]">CADASTRO GRATUITO</p>
+              <h2 className="font-display mt-5 text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl">
+                Entre para a
+                <br />
+                <span className="font-serif-accent italic text-[hsl(var(--brand-gold))]">Comunidade AI</span>
+              </h2>
+              <p className="mt-6 text-base leading-8 text-white/78 sm:text-lg">
+                Preencha os campos abaixo para criar a sua conta na Comunidade ArtesanatoInteligente®. É gratuito, simples e rápido. Se precisar de ajuda, é só chamar no WhatsApp.
+              </p>
             </div>
 
-            <div className="mx-auto mt-10 max-w-[1100px] px-4 text-center text-xs text-white/70 lg:px-8">
-              Está com dificuldade?{" "}
-              <a href="/login?next=%2Fmembros%2Fwhatsapp" className="font-semibold text-[hsl(var(--brand-gold))] hover:opacity-90">
-                Fale no WhatsApp →
-              </a>
+            <div className="mx-auto mt-12 max-w-2xl">
+              <CommunitySignupForm />
             </div>
           </div>
-
-          <footer className="bg-[hsl(var(--premium-sidebar-from))] py-10 text-white">
-            <div className="mx-auto max-w-[1100px] px-4 text-center lg:px-8">
-              <div className="inline-flex items-center gap-2 text-sm font-semibold text-white/75">
-                <span>Fernanda</span>
-                <Leaf className="h-4 w-4 text-accent" />
-                <span>Sklovsky</span>
-              </div>
-              <p className="mt-3 text-xs text-white/60">© 2026 Comunidade ArtesanatoInteligente • Fernanda Sklovsky • Todos os direitos reservados.</p>
-              <p className="mt-1 text-xs text-white/60">Termos de uso • Privacidade</p>
-            </div>
-          </footer>
         </section>
       </main>
 
+      <footer className="bg-[#203244] py-12 text-[hsl(var(--brand-sand))]">
+        <div className="landing-shell text-center">
+          <div className="inline-flex flex-col items-center justify-center gap-1">
+            <div className="font-display flex items-center gap-2 text-lg font-semibold">
+              <span>Fernanda</span>
+              <Star className="h-5 w-5 fill-[hsl(var(--brand-gold))] text-[hsl(var(--brand-gold))]" />
+              <span>Sklovsky</span>
+            </div>
+            <div className="font-serif-accent italic">ArtesanatoInteligente®</div>
+          </div>
+          <p className="mt-4 text-sm leading-7 text-white/72">© 2026 Comunidade ArtesanatoInteligente® · Fernanda Sklovsky · Todos os direitos reservados.</p>
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-white/72">
+            <Link href="/termos" className="font-display font-semibold hover:text-[hsl(var(--brand-gold))]">
+              Termos de uso
+            </Link>
+            <Link href="/privacidade" className="font-display font-semibold hover:text-[hsl(var(--brand-gold))]">
+              Privacidade
+            </Link>
+          </div>
+          <p className="mt-3 text-sm text-white/56">CNPJ: a confirmar</p>
+        </div>
+      </footer>
+
       <a
-        href="/login?next=%2Fmembros%2Fwhatsapp"
-        className="fixed bottom-6 right-6 z-50 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[hsl(var(--brand-mint))] text-[hsl(var(--brand-ink))] shadow-premium ring-1 ring-black/5 transition hover:opacity-90"
-        aria-label="WhatsApp"
+        href={WHATSAPP_HELP_LINK}
+        target="_blank"
+        rel="noreferrer"
+        className="fixed bottom-6 right-6 z-50 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full bg-[hsl(var(--brand-gold))] p-4 text-[hsl(var(--brand-ink))] shadow-premium hover:opacity-90"
+        aria-label="Falar no WhatsApp"
       >
         <MessageCircleHeart className="h-6 w-6" />
       </a>

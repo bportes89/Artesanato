@@ -1,13 +1,18 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Inter } from "next/font/google";
+import { Cormorant_Garamond, DM_Sans, Outfit } from "next/font/google";
 import { cookies } from "next/headers";
 import { Providers } from "@/components/providers";
 import { appConfig, apiUrl } from "@/lib/config";
 import "./globals.css";
 
-const sans = Inter({ variable: "--font-sans", subsets: ["latin"] });
-const serif = Cormorant_Garamond({ variable: "--font-serif", subsets: ["latin"], weight: ["400", "500", "600", "700"] });
-export const metadata: Metadata = { title: "Fernanda Sklovsky", description: "Plataforma premium de cursos, curadoria, ebooks, comunidade e mentoria." };
+const bodyFont = DM_Sans({ variable: "--font-body", subsets: ["latin"] });
+const displayFont = Outfit({ variable: "--font-display", subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
+const serifFont = Cormorant_Garamond({ variable: "--font-serif", subsets: ["latin"], style: ["normal", "italic"], weight: ["400", "500", "600", "700"] });
+
+export const metadata: Metadata = {
+  title: "Comunidade ArtesanatoInteligente®",
+  description: "Comunidade online criada por Fernanda Sklovsky para artesãs que desejam crescer com estratégia, acolhimento e curadoria.",
+};
 
 async function getBootstrapUser() {
   const cookieStore = await cookies();
@@ -23,11 +28,10 @@ async function getBootstrapUser() {
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const user = await getBootstrapUser();
   return (
-    <html lang="pt-BR" className={`${sans.variable} ${serif.variable}`} suppressHydrationWarning>
+    <html lang="pt-BR" className={`${bodyFont.variable} ${displayFont.variable} ${serifFont.variable}`} suppressHydrationWarning>
       <body className="font-sans text-foreground">
         <Providers user={user}>{children}</Providers>
       </body>
     </html>
   );
 }
-
