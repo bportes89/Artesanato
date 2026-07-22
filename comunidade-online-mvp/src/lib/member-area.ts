@@ -20,6 +20,13 @@ export const paidEbookCheckoutLink =
 export const welcomeVideoEmbedUrl =
   process.env.NEXT_PUBLIC_MEMBER_WELCOME_VIDEO_URL ?? "";
 
+export function buildWhatsAppIntentLink(message: string) {
+  const base = memberWhatsAppLink.includes("?")
+    ? `${memberWhatsAppLink}&text=`
+    : `${memberWhatsAppLink}?text=`;
+  return `${base}${encodeURIComponent(message)}`;
+}
+
 export function getMemberName(name?: string | null) {
   return name?.trim() || "artesã";
 }

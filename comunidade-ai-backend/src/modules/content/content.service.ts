@@ -5,6 +5,21 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class ContentService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async listCuration(tenantId: string) {
+    return this.prisma.curationItem.findMany({
+      where: { tenantId, status: 'PUBLISHED' },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        url: true,
+        tag: true,
+        publishedAt: true,
+      },
+      orderBy: [{ tag: 'asc' }, { publishedAt: 'desc' }, { title: 'asc' }],
+    });
+  }
+
   async listCourses(tenantId: string) {
     return this.prisma.course.findMany({
       where: { tenantId, status: 'PUBLISHED' },
@@ -40,7 +55,18 @@ export class ContentService {
         lessons: {
           where: { status: 'PUBLISHED' },
           orderBy: { sortOrder: 'asc' },
-          select: { id: true, title: true, type: true, sortOrder: true },
+          select: {
+            id: true,
+            title: true,
+            type: true,
+            sortOrder: true,
+            video: {
+              select: {
+                pandaVideoId: true,
+                durationSec: true,
+              },
+            },
+          },
         },
       },
     });

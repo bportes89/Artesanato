@@ -9,6 +9,11 @@ import { ContentService } from './content.service';
 export class ContentController {
   constructor(private readonly content: ContentService) {}
 
+  @Get('curation')
+  async curation(@CurrentUser() user: AuthUser) {
+    return this.content.listCuration(user.tenantId);
+  }
+
   @Get('courses')
   async courses(@CurrentUser() user: AuthUser) {
     return this.content.listCourses(user.tenantId);
