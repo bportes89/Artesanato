@@ -48,13 +48,19 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="flex justify-between text-sm text-muted-foreground">
-            <Link href="/cadastro" className="hover:text-foreground">
-              Criar conta
-            </Link>
-            <Link href="/esqueci-senha" className="hover:text-foreground">
-              Esqueci minha senha
-            </Link>
+          <div className="space-y-3 border-t border-[#1B2A3B]/10 pt-4 text-sm">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground">Ainda não tem acesso?</span>
+              <Link href="/cadastro" className="font-semibold text-[#1B2A3B] hover:text-[#D4542A]">
+                Criar conta
+              </Link>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground">Precisa recuperar sua senha?</span>
+              <Link href="/esqueci-senha" className="font-semibold text-[#1B2A3B] hover:text-[#D4542A]">
+                Esqueci minha senha
+              </Link>
+            </div>
           </div>
         </CardContent>
       </Card>
