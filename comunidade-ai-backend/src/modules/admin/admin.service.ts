@@ -1027,7 +1027,21 @@ export class AdminService {
       }),
     ]);
 
-    return { page, limit: take, total, items };
+    return {
+      page,
+      limit: take,
+      total,
+      items: items.map((item) => ({
+        ...item,
+        expectedSizeBytes: item.expectedSizeBytes != null ? item.expectedSizeBytes.toString() : null,
+        file: item.file
+          ? {
+              ...item.file,
+              sizeBytes: item.file.sizeBytes != null ? item.file.sizeBytes.toString() : null,
+            }
+          : null,
+      })),
+    };
   }
 
   async listCarousel(params: { tenantId: string; page?: number; limit?: number; status?: string; query?: string }) {
@@ -1230,6 +1244,21 @@ export class AdminService {
       },
       select: { id: true },
     });
+
+    if (params.resourceType === 'EBOOK') {
+      await this.prisma.libraryItem.upsert({
+        where: { userId_ebookId: { userId: params.userId, ebookId: params.resourceId } },
+        update: { revokedAt: null, sourceType: 'ADMIN_GRANT', sourceRef: params.sourceRef ?? null },
+        create: {
+          tenantId: params.tenantId,
+          userId: params.userId,
+          ebookId: params.resourceId,
+          sourceType: 'ADMIN_GRANT',
+          sourceRef: params.sourceRef ?? null,
+        },
+        select: { id: true },
+      });
+    }
 
     return ent;
   }

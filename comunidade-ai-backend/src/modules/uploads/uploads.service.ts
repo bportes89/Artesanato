@@ -62,6 +62,7 @@ export class UploadsService {
 
     return {
       uploadSessionId: uploadSession.id,
+      fileObjectId: file.id,
       r2Key: file.r2Key,
       uploadUrl,
       method: 'PUT',
@@ -91,7 +92,7 @@ export class UploadsService {
         : this.prisma.fileObject.updateMany({ where: { id: '00000000-0000-0000-0000-000000000000' }, data: {} }),
     ]);
 
-    return { ok: true };
+    return { ok: true, fileObjectId: upload.fileId ?? null };
   }
 
   async getSignedReadUrl(params: { tenantId: string; r2Key: string; ttlSeconds?: number }) {
