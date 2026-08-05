@@ -65,7 +65,7 @@ export class EbooksService {
       select: { id: true },
     });
 
-    const url = await this.uploads.getSignedReadUrl({ tenantId: params.tenantId, r2Key: ebook.file.r2Key });
+    const url = await this.uploads.getSignedEbookFileReadUrl({ tenantId: params.tenantId, r2Key: ebook.file.r2Key });
     return { url };
   }
 }

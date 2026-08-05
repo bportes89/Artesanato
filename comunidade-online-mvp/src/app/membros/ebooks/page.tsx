@@ -12,46 +12,64 @@ function normalizeText(value: string) {
     .trim();
 }
 
+type PublishedEbook = NonNullable<Awaited<ReturnType<typeof ebooksService.list>>>[number];
+
+function matchPublishedEbook(catalogId: string, editorialTitle: string, published: PublishedEbook[]) {
+  const editorial = normalizeText(editorialTitle);
+  const keywordMatchers: Record<string, (title: string) => boolean> = {
+    "guia-fotografia": (title) => title.includes("fotografia"),
+    "moda-croche": (title) => title.includes("moda") && title.includes("croch"),
+  };
+
+  const keywordMatch = published.find((item) => keywordMatchers[catalogId]?.(normalizeText(item.title)));
+  if (keywordMatch) return keywordMatch;
+
+  return (
+    published.find((item) => normalizeText(item.title) === editorial) ??
+    published.find((item) => normalizeText(item.title).includes(editorial)) ??
+    published.find((item) => editorial.includes(normalizeText(item.title)))
+  );
+}
+
 export default async function EbooksPage() {
   const [publishedEbooks, libraryItems] = await Promise.all([ebooksService.list(), ebooksService.my()]);
   const published = publishedEbooks ?? [];
   const library = libraryItems ?? [];
 
   const catalog = ebooksCatalog.map((editorialEbook) => {
-    const publishedMatch =
-      published.find((item) => normalizeText(item.title) === normalizeText(editorialEbook.title)) ??
-      published.find((item) => normalizeText(item.title).includes(normalizeText(editorialEbook.title))) ??
-      published.find((item) => normalizeText(editorialEbook.title).includes(normalizeText(item.title)));
+    const publishedMatch = matchPublishedEbook(editorialEbook.id, editorialEbook.title, published);
+    const libraryMatch =
+      library.find((item) => item.ebook.id === publishedMatch?.id) ??
+      library.find((item) => matchPublishedEbook(editorialEbook.id, item.ebook.title, [item.ebook]));
 
-    const libraryMatch = library.find((item) => item.ebook.id === publishedMatch?.id);
     const isFree = editorialEbook.id === "guia-fotografia";
+    const hasLibraryAccess = Boolean(libraryMatch);
 
     return {
       ...editorialEbook,
       title: publishedMatch?.title ?? editorialEbook.title,
       description: publishedMatch?.description?.trim() || editorialEbook.description,
       publishedId: publishedMatch?.id ?? null,
-      hasLibraryAccess: Boolean(libraryMatch),
-      action:
-        isFree && libraryMatch
+      hasLibraryAccess,
+      action: hasLibraryAccess
+        ? {
+            href: `/api/ebooks/${libraryMatch!.ebook.id}`,
+            label: "Baixar agora",
+            external: false,
+          }
+        : isFree
           ? {
-              href: `/api/ebooks/${libraryMatch.ebook.id}`,
-              label: "Baixar agora",
-              external: false,
+              href: buildWhatsAppIntentLink(
+                `Olá, quero liberar o download do ebook "${publishedMatch?.title ?? editorialEbook.title}" na Comunidade ArtesanatoInteligente®.`,
+              ),
+              label: "Solicitar liberação do PDF",
+              external: true,
             }
-          : isFree
-            ? {
-                href: buildWhatsAppIntentLink(
-                  `Olá, quero liberar o download do ebook "${publishedMatch?.title ?? editorialEbook.title}" na Comunidade ArtesanatoInteligente®.`,
-                ),
-                label: "Solicitar liberação do PDF",
-                external: true,
-              }
-            : {
-                href: paidEbookCheckoutLink,
-                label: "Comprar",
-                external: true,
-              },
+          : {
+              href: paidEbookCheckoutLink,
+              label: "Comprar",
+              external: true,
+            },
     };
   });
 

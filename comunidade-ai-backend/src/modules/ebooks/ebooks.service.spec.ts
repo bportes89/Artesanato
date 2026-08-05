@@ -9,7 +9,7 @@ describe('EbooksService', () => {
       analyticsEvent: { create: jest.fn(async () => ({ id: 'a1' })) },
     };
 
-    const uploads: any = { getSignedReadUrl: jest.fn(async () => 'https://signed') };
+    const uploads: any = { getSignedEbookFileReadUrl: jest.fn(async () => 'https://signed') };
     const service = new EbooksService(prisma, uploads);
 
     const res = await service.getDownloadUrl({

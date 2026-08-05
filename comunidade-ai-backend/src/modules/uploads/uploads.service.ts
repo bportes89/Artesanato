@@ -96,22 +96,35 @@ export class UploadsService {
   }
 
   async getSignedReadUrl(params: { tenantId: string; r2Key: string; ttlSeconds?: number }) {
-    const { client, bucket } = this.getR2Client();
+    const file = await this.resolveReadableFile(params.tenantId, params.r2Key);
+    if (file.purpose === 'EBOOK_FILE') throw new BadRequestException('Acesso negado');
+    return this.signReadUrl(params.r2Key, params.ttlSeconds);
+  }
 
-    if (!this.isTenantKey(params.tenantId, params.r2Key)) {
+  async getSignedEbookFileReadUrl(params: { tenantId: string; r2Key: string; ttlSeconds?: number }) {
+    const file = await this.resolveReadableFile(params.tenantId, params.r2Key);
+    if (file.purpose !== 'EBOOK_FILE') throw new BadRequestException('Acesso negado');
+    return this.signReadUrl(params.r2Key, params.ttlSeconds);
+  }
+
+  private async resolveReadableFile(tenantId: string, r2Key: string) {
+    if (!this.isTenantKey(tenantId, r2Key)) {
       throw new BadRequestException('Chave inválida');
     }
 
     const file = await this.prisma.fileObject.findUnique({
-      where: { r2Key: params.r2Key },
+      where: { r2Key },
       select: { tenantId: true, purpose: true },
     });
-    if (!file || file.tenantId !== params.tenantId) throw new BadRequestException('Arquivo não encontrado');
-    if (file.purpose === 'EBOOK_FILE') throw new BadRequestException('Acesso negado');
+    if (!file || file.tenantId !== tenantId) throw new BadRequestException('Arquivo não encontrado');
+    return file;
+  }
 
+  private async signReadUrl(r2Key: string, ttlSeconds?: number) {
+    const { client, bucket } = this.getR2Client();
     const ttlMax = this.config.get<number>('R2_SIGNED_URL_TTL_SECONDS') ?? 900;
-    const ttl = Math.min(params.ttlSeconds ?? ttlMax, ttlMax);
-    const cmd = new GetObjectCommand({ Bucket: bucket, Key: params.r2Key });
+    const ttl = Math.min(ttlSeconds ?? ttlMax, ttlMax);
+    const cmd = new GetObjectCommand({ Bucket: bucket, Key: r2Key });
     return getSignedUrl(client, cmd, { expiresIn: ttl });
   }
 

@@ -228,8 +228,8 @@ export const videoLessons = [
 export const ebooksCatalog = [
   {
     id: "guia-fotografia",
-    title: "Guia de Fotografia para Artesanato",
-    description: "Material direto para melhorar fotos, valorizar detalhes e apresentar peças com mais profissionalismo.",
+    title: "Guia de Fotografia para Artesãs",
+    description: "Fotografe suas peças com celular, luz natural e enquadramento profissional.",
     badge: "GRATUITO",
     badgeTone: "free" as const,
     actionLabel: "Baixar agora",
@@ -237,8 +237,8 @@ export const ebooksCatalog = [
   },
   {
     id: "moda-croche",
-    title: "Moda & Crochê: 10 ideias inovadoras para crocheterias contemporâneas",
-    description: "Um conteúdo para destravar repertório criativo e abrir novas possibilidades de coleção e posicionamento.",
+    title: "Moda & Crochê",
+    description: "Ebook da Fernanda Sklovsky sobre moda e crochê aplicados ao artesanato.",
     badge: null,
     badgeTone: "paid" as const,
     actionLabel: "Comprar",
