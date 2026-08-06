@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { buildWhatsAppIntentLink, curationCategories } from "@/lib/member-area";
+import { curationCategories } from "@/lib/member-area";
 import { contentService, type CurationItem } from "@/lib/services/content";
 
 function normalizeText(value: string) {
@@ -48,6 +48,24 @@ function resolveCategoryId(item: Pick<CurationItem, "tag" | "title">) {
   return null;
 }
 
+function matchPublishedItem(editorialTitle: string, published: CurationItem[]) {
+  const editorial = normalizeText(editorialTitle);
+  return (
+    published.find((item) => normalizeText(item.title) === editorial) ??
+    published.find((item) => normalizeText(item.title).includes(editorial)) ??
+    published.find((item) => editorial.includes(normalizeText(item.title)))
+  );
+}
+
+type CuratedCard = {
+  key: string;
+  title: string;
+  description: string;
+  kind: string;
+  href: string | null;
+  actionLabel: string;
+};
+
 export default async function CuradoriaPage() {
   const publishedItems = (await contentService.curation()) ?? [];
   const groupedPublishedItems = new Map<string, CurationItem[]>();
@@ -62,29 +80,53 @@ export default async function CuradoriaPage() {
 
   const categories = curationCategories.map((category) => {
     const publishedCategoryItems = groupedPublishedItems.get(category.id) ?? [];
-    const items =
-      publishedCategoryItems.length > 0
-        ? publishedCategoryItems.map((item) => ({
-            title: item.title,
-            description: item.description?.trim() || "Conteúdo publicado na curadoria da Fernanda para consulta imediata.",
-            href: item.url,
-            kind: inferKind(item.url),
-            actionLabel: "Abrir conteúdo",
-          }))
-        : category.items.map((item) => ({
-            title: item.title,
-            description: item.description,
-            href: buildWhatsAppIntentLink(
-              `Olá, quero receber o conteúdo "${item.title}" da Curadoria da Comunidade ArtesanatoInteligente®.`,
-            ),
-            kind: item.kind,
-            actionLabel: "Solicitar conteúdo",
-          }));
+    const matchedPublishedIds = new Set<string>();
+    const items: CuratedCard[] = [];
+
+    for (const item of category.items) {
+      const published = matchPublishedItem(item.title, publishedCategoryItems);
+      if (published) matchedPublishedIds.add(published.id);
+
+      if (published?.url) {
+        items.push({
+          key: published.id,
+          title: published.title,
+          description: published.description?.trim() || item.description,
+          href: published.url,
+          kind: inferKind(published.url),
+          actionLabel: "Abrir conteúdo",
+        });
+        continue;
+      }
+
+      items.push({
+        key: item.title,
+        title: item.title,
+        description: item.description,
+        href: null,
+        kind: item.kind,
+        actionLabel: "Em breve",
+      });
+    }
+
+    for (const item of publishedCategoryItems) {
+      if (matchedPublishedIds.has(item.id)) continue;
+      items.push({
+        key: item.id,
+        title: item.title,
+        description: item.description?.trim() || "Conteúdo publicado na curadoria da Fernanda para consulta imediata.",
+        href: item.url,
+        kind: inferKind(item.url),
+        actionLabel: "Abrir conteúdo",
+      });
+    }
+
+    const availableCount = items.filter((item) => item.href).length;
 
     return {
       ...category,
       items,
-      usesPublishedItems: publishedCategoryItems.length > 0,
+      availableCount,
     };
   });
 
@@ -105,22 +147,28 @@ export default async function CuradoriaPage() {
               <p className="font-display text-sm font-semibold uppercase tracking-[0.22em] text-[#D4542A]">{category.id}</p>
               <CardTitle className="font-display text-2xl text-[#1B2A3B]">{category.title}</CardTitle>
               <p className="text-sm text-[#1B2A3B]/70">
-                {category.usesPublishedItems
-                  ? "Conteúdos já publicados e prontos para abrir."
-                  : "Seleção editorial pronta para solicitação enquanto os links finais são organizados na biblioteca."}
+                {category.availableCount > 0
+                  ? `${category.availableCount} conteúdo${category.availableCount === 1 ? "" : "s"} disponível${category.availableCount === 1 ? "" : "is"} para abrir agora.`
+                  : "Esta categoria será liberada em breve na biblioteca."}
               </p>
             </CardHeader>
             <CardContent className="grid gap-4 lg:grid-cols-2">
               {category.items.map((item) => (
-                <div key={item.title} className="rounded-[24px] border border-[#1B2A3B]/10 bg-[#F1E8DC] px-5 py-5">
+                <div key={item.key} className="rounded-[24px] border border-[#1B2A3B]/10 bg-[#F1E8DC] px-5 py-5">
                   <div className="flex items-center justify-between gap-3">
                     <p className="font-semibold text-[#1B2A3B]">{item.title}</p>
                     <span className="rounded-full bg-white px-3 py-1 text-sm font-semibold text-[#D4542A]">{item.kind}</span>
                   </div>
                   <p className="mt-3 text-base leading-8 text-[#1B2A3B]/80">{item.description}</p>
-                  <Link href={item.href} target="_blank" rel="noreferrer" className="mt-4 inline-flex text-sm font-semibold text-[#D4542A]">
-                    {item.actionLabel}
-                  </Link>
+                  {item.href ? (
+                    <Link href={item.href} target="_blank" rel="noreferrer" className="mt-4 inline-flex text-sm font-semibold text-[#D4542A]">
+                      {item.actionLabel}
+                    </Link>
+                  ) : (
+                    <span className="mt-4 inline-flex rounded-full bg-white/70 px-4 py-2 text-sm font-semibold text-[#1B2A3B]/60">
+                      {item.actionLabel}
+                    </span>
+                  )}
                 </div>
               ))}
             </CardContent>

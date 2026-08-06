@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PandaPlayer } from "@/components/media/panda-player";
-import { buildWhatsAppIntentLink, videoLessons } from "@/lib/member-area";
+import { videoLessons } from "@/lib/member-area";
 import { contentService, type CourseDetail } from "@/lib/services/content";
 
 function normalizeText(value: string) {
@@ -107,20 +106,13 @@ export default async function VideoaulasPage() {
                   </span>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div className="rounded-[24px] border border-dashed border-[#1B2A3B]/15 bg-[#F1E8DC] px-5 py-5 text-base leading-8 text-[#1B2A3B]/80">
-                    {lesson.hasRealLesson
-                      ? "A estrutura da aula já está publicada. O player será liberado assim que o vídeo final for vinculado."
-                      : "Esta aula será publicada aqui assim que o conteúdo final for vinculado na plataforma."}
-                  </div>
-                  <Link
-                    href={buildWhatsAppIntentLink(`Olá, quero receber acesso à aula "${lesson.title}" da Comunidade ArtesanatoInteligente®.`)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#F5A623] px-5 text-base font-semibold text-[#1B2A3B]"
-                  >
-                    Solicitar acesso
-                  </Link>
+                <div className="rounded-[24px] border border-dashed border-[#1B2A3B]/15 bg-[#F1E8DC] px-5 py-5 text-base leading-8 text-[#1B2A3B]/80">
+                  {lesson.hasRealLesson
+                    ? "A estrutura da aula já está publicada. O player será liberado assim que o vídeo final for vinculado."
+                    : "Esta aula será publicada aqui assim que o conteúdo final for vinculado na plataforma."}
+                  <span className="mt-4 inline-flex rounded-full bg-white/70 px-4 py-2 text-sm font-semibold text-[#1B2A3B]/60">
+                    Em breve
+                  </span>
                 </div>
               )}
             </CardContent>
