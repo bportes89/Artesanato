@@ -1,13 +1,13 @@
-import { PrismaPg } from '@prisma/adapter-pg';
+import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
+import { createPrismaPgAdapter } from '../src/prisma/pg-pool';
 
 async function main() {
   const connectionString = (process.env.DATABASE_URL ?? '').trim();
-  if (!connectionString) {
-    throw new Error('DATABASE_URL não configurado');
+  if (/supabase\.co|pooler\.supabase\.com/i.test(connectionString)) {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
   }
-  const adapter = new PrismaPg(connectionString);
-  const prisma = new PrismaClient({ adapter });
+  const prisma = new PrismaClient({ adapter: createPrismaPgAdapter(connectionString) });
   const slug = (process.env.DEFAULT_TENANT_SLUG ?? 'default').trim() || 'default';
 
   const tenant = await prisma.tenant.upsert({
@@ -52,6 +52,21 @@ async function main() {
     create: { tenantId: tenant.id, userId: admin.id, roleId: adminRole.id },
     select: { id: true },
   });
+
+  const adminPassword = (process.env.SEED_ADMIN_PASSWORD ?? '').trim();
+  if (adminPassword) {
+    const cost = Number(process.env.BCRYPT_COST ?? 12);
+    const passwordHash = await bcrypt.hash(adminPassword, Number.isFinite(cost) ? cost : 12);
+    await prisma.userCredential.upsert({
+      where: { userId: admin.id },
+      update: { passwordHash },
+      create: { userId: admin.id, passwordHash },
+      select: { id: true },
+    });
+    console.log(`Admin pronto: ${admin.email} (senha via SEED_ADMIN_PASSWORD)`);
+  } else {
+    console.warn('SEED_ADMIN_PASSWORD não definido — admin criado sem senha. Use /cadastro ou defina a variável e rode o seed de novo.');
+  }
 
   await prisma.communitySpace.upsert({
     where: { tenantId_name: { tenantId: tenant.id, name: 'Geral' } },
